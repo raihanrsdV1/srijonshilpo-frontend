@@ -262,31 +262,43 @@ export default function BuilderPage() {
   return (
     <div className="builder-container">
       {/* Header */}
-      <div className="builder-header bg-white border-b px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="builder-header bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center space-x-6">
           <button 
             onClick={() => navigate('/projects')}
-            className="text-gray-600 hover:text-gray-800 px-3 py-1 rounded border"
+            className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-200 font-medium flex items-center gap-2"
           >
-            ← Back
+            ← Back to Projects
           </button>
-          <h1 className="text-lg font-semibold">{project.name}</h1>
-          {saving && <span className="text-sm text-gray-500">Saving...</span>}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
+            {project.description && (
+              <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+            )}
+          </div>
+          {saving && (
+            <div className="flex items-center gap-2 text-blue-600">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm font-medium">Saving...</span>
+            </div>
+          )}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-3">
           <button 
             onClick={saveProject}
             disabled={saving || !editor}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
           >
-            {saving ? 'Saving...' : '💾 Save'}
+            <span className="text-lg">💾</span>
+            {saving ? 'Saving...' : 'Save'}
           </button>
           <button 
             onClick={publishProject}
             disabled={!editor}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
           >
-            🚀 Publish
+            <span className="text-lg">🚀</span>
+            Publish
           </button>
         </div>
       </div>
@@ -295,45 +307,6 @@ export default function BuilderPage() {
       <div className="builder-workspace flex-1">
         <div ref={editorRef} className="w-full h-full"></div>
       </div>
-
-      <style>{`
-        .builder-container {
-          height: 100vh;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .builder-workspace {
-          flex: 1;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        /* GrapesJS Custom Styles */
-        .gjs-pn-panel {
-          background: #fff !important;
-        }
-        
-        .btn-save {
-          background: #28a745 !important;
-          color: white !important;
-          margin-right: 5px !important;
-        }
-        
-        .btn-publish {
-          background: #007bff !important;
-          color: white !important;
-        }
-        
-        .gjs-pn-btn {
-          padding: 8px 12px !important;
-          border-radius: 4px !important;
-        }
-        
-        .gjs-editor {
-          height: 100% !important;
-        }
-      `}</style>
     </div>
   )
 }

@@ -99,86 +99,94 @@ export default function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
-              <p className="text-gray-600 mt-2">Create and manage your web page builder projects</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Projects</h1>
+              <p className="text-gray-600">Create and manage your web page builder projects</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
             >
-              + New Project
+              <span>+</span> New Project
             </button>
           </div>
         </div>
 
         {projects.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📄</div>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No projects yet</h3>
-            <p className="text-gray-600 mb-6">Create your first project to get started with the visual builder</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create Your First Project
-            </button>
+          <div className="text-center py-16">
+            <div className="bg-white rounded-xl shadow-md p-12 max-w-md mx-auto">
+              <div className="text-gray-300 text-6xl mb-4">📄</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects yet</h3>
+              <p className="text-gray-600 mb-6">Create your first project to get started with the visual builder</p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Create Your First Project
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div key={project.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">{project.name}</h3>
-                    {project.isPublished && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        Published
-                      </span>
-                    )}
-                  </div>
-                  
-                  {project.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{project.description}</p>
-                  )}
-                  
-                  <div className="text-xs text-gray-500 mb-4">
-                    <div>Created: {formatDate(project.createdAt)}</div>
-                    {project.updatedAt !== project.createdAt && (
-                      <div>Updated: {formatDate(project.updatedAt)}</div>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => navigate(`/builder/${project.id}`)}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      Edit
-                    </button>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="divide-y divide-gray-100">
+              {projects.map((project) => (
+                <div key={project.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                        {project.isPublished && (
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                            Published
+                          </span>
+                        )}
+                      </div>
+                      
+                      {project.description ? (
+                        <p className="text-gray-600 mb-3 line-clamp-2">{project.description}</p>
+                      ) : (
+                        <p className="text-gray-400 mb-3 italic">No description provided</p>
+                      )}
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span>Created: {formatDate(project.createdAt)}</span>
+                        {project.updatedAt !== project.createdAt && (
+                          <span>Updated: {formatDate(project.updatedAt)}</span>
+                        )}
+                      </div>
+                    </div>
                     
-                    {project.isPublished && (
+                    <div className="flex items-center gap-2 ml-6">
                       <button
-                        onClick={() => window.open(`/public/projects/${project.id}/render`, '_blank')}
-                        className="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors text-sm"
+                        onClick={() => navigate(`/builder/${project.id}`)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                       >
-                        View
+                        Edit
                       </button>
-                    )}
-                    
-                    <button
-                      onClick={() => deleteProject(project.id)}
-                      className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors text-sm"
-                    >
-                      Delete
-                    </button>
+                      
+                      {project.isPublished && (
+                        <button
+                          onClick={() => window.open(`/public/projects/${project.id}/render`, '_blank')}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                        >
+                          View
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => deleteProject(project.id)}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
