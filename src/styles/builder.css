@@ -1,0 +1,139 @@
+/* GrapeJS CSS - Import the main stylesheet */
+@import 'grapesjs/dist/css/grapes.min.css';
+
+/* Custom Builder Styles */
+.builder-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.builder-header {
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+  z-index: 1000;
+}
+
+.builder-workspace {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* GrapesJS Editor Overrides */
+.gjs-editor {
+  height: 100% !important;
+}
+
+.gjs-pn-panel {
+  background: #fff !important;
+  border-right: 1px solid #ddd !important;
+}
+
+.gjs-pn-btn {
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  margin: 2px !important;
+}
+
+.gjs-pn-btn:hover {
+  background: #f0f0f0 !important;
+}
+
+.gjs-pn-btn.gjs-pn-active {
+  background: #007bff !important;
+  color: white !important;
+}
+
+/* Custom Save/Publish Buttons */
+.btn-save {
+  background: #28a745 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-publish {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-save:hover,
+.btn-publish:hover {
+  opacity: 0.9 !important;
+}
+
+/* Canvas styling */
+.gjs-cv-canvas {
+  background: #f8f9fa !important;
+}
+
+/* Block manager styling */
+.gjs-blocks-c {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  padding: 10px !important;
+}
+
+.gjs-block {
+  width: calc(50% - 10px) !important;
+  margin: 5px !important;
+  padding: 10px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  background: white !important;
+}
+
+.gjs-block:hover {
+  border-color: #007bff !important;
+  background: #f8f9fa !important;
+}
+
+/* Style manager improvements */
+.gjs-sm-sectors {
+  padding: 10px !important;
+}
+
+.gjs-sm-sector {
+  margin-bottom: 15px !important;
+}
+
+.gjs-sm-title {
+  background: #f8f9fa !important;
+  padding: 8px 10px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+}
+
+/* Layer manager improvements */
+.gjs-lm-layers {
+  padding: 10px !important;
+}
+
+.gjs-lm-layer {
+  padding: 5px !important;
+  border-radius: 3px !important;
+}
+
+.gjs-lm-layer:hover {
+  background: #f8f9fa !important;
+}
+
+/* Responsive design helpers */
+@media (max-width: 768px) {
+  .builder-header {
+    padding: 8px 16px !important;
+  }
+  
+  .builder-header h1 {
+    font-size: 16px !important;
+  }
+  
+  .builder-header button {
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+  }
+}
