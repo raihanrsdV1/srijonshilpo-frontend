@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../services/api'
+import { builderService } from '../services/api'
 
 interface Project {
   id: number
   name: string
   description: string
+  userId: string
+  slug: string
   htmlContent: string
   cssContent: string
   jsContent: string
@@ -29,13 +31,18 @@ export default function ProjectsPage() {
 
   const loadProjects = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const { data } = await api.get<Project[]>('/api/builder/projects', {
-        headers: { 'X-User-ID': user.username }
-      })
+      console.log('Loading user projects...')
+      const data = await builderService.getUserProjects()
+      console.log('Loaded projects:', data)
       setProjects(data)
     } catch (error) {
       console.error('Failed to load projects:', error)
+      // If unauthorized, redirect to login
+      if ((error as any)?.response?.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        navigate('/login')
+      }
     } finally {
       setLoading(false)
     }
@@ -46,16 +53,15 @@ export default function ProjectsPage() {
 
     setCreating(true)
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const { data } = await api.post<Project>('/api/builder/projects', newProject, {
-        headers: { 'X-User-ID': user.username }
-      })
-      
+      console.log('Creating project:', newProject)
+      const data = await builderService.createProject(newProject.name, newProject.description)
+      console.log('Created project:', data)
       setProjects([...projects, data])
       setNewProject({ name: '', description: '' })
       setShowCreateModal(false)
     } catch (error) {
       console.error('Failed to create project:', error)
+      alert('Failed to create project. Please try again.')
     } finally {
       setCreating(false)
     }
@@ -65,14 +71,31 @@ export default function ProjectsPage() {
     if (!confirm('Are you sure you want to delete this project?')) return
 
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      await api.delete(`/api/builder/projects/${projectId}`, {
-        headers: { 'X-User-ID': user.username }
-      })
-      
+      await builderService.deleteProject(projectId)
       setProjects(projects.filter(p => p.id !== projectId))
     } catch (error) {
       console.error('Failed to delete project:', error)
+      alert('Failed to delete project. Please try again.')
+    }
+  }
+
+  const publishProject = async (projectId: number) => {
+    try {
+      console.log('Publishing project:', projectId)
+      await builderService.publishProject(projectId)
+      console.log('Project published successfully')
+      // Reload projects to get updated status
+      await loadProjects()
+    } catch (error) {
+      console.error('Failed to publish project:', error)
+      alert('Failed to publish project. Please try again.')
+    }
+  }
+
+  const viewLiveWebsite = (project: Project) => {
+    if (project.isPublished && project.slug) {
+      const url = `http://localhost:8083/public/sites/${project.slug}/render`
+      window.open(url, '_blank')
     }
   }
 
@@ -167,13 +190,25 @@ export default function ProjectsPage() {
                         Edit
                       </button>
                       
-                      {project.isPublished && (
+                      {!project.isPublished ? (
                         <button
-                          onClick={() => window.open(`/public/projects/${project.id}/render`, '_blank')}
+                          onClick={() => publishProject(project.id)}
                           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
                         >
-                          View
+                          Publish
                         </button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => viewLiveWebsite(project)}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                          >
+                            View Live
+                          </button>
+                          <span className="text-xs text-gray-500 self-center">
+                            {project.slug && `/${project.slug}`}
+                          </span>
+                        </div>
                       )}
                       
                       <button

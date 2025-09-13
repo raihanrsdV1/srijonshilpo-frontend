@@ -16,6 +16,7 @@ function App() {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/builder/:projectId" element={<BuilderPage />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

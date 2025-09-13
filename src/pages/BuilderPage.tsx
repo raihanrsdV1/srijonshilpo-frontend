@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '../services/api'
+import { builderService } from '../services/api'
 import '../styles/builder.css'
 
 interface Project {
@@ -65,10 +65,7 @@ export default function BuilderPage() {
 
   const loadProject = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const { data } = await api.get<Project>(`/api/builder/projects/${projectId}`, {
-        headers: { 'X-User-ID': user.username }
-      })
+      const data = await builderService.getProject(Number(projectId))
       setProject(data)
     } catch (error) {
       console.error('Failed to load project:', error)
@@ -157,16 +154,13 @@ export default function BuilderPage() {
 
     setSaving(true)
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
       const projectData = editor.getProjectData()
       
-      await api.post(`/api/builder/projects/${project.id}/save`, {
+      await builderService.saveProject(project.id, {
         htmlContent: editor.getHtml(),
         cssContent: editor.getCss(),
         jsContent: editor.getJs ? editor.getJs() : '',
         grapejsData: JSON.stringify(projectData)
-      }, {
-        headers: { 'X-User-ID': user.username }
       })
 
       // Show success message
@@ -195,10 +189,7 @@ export default function BuilderPage() {
     if (!project) return
 
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      await api.post(`/api/builder/projects/${project.id}/publish`, {}, {
-        headers: { 'X-User-ID': user.username }
-      })
+      await builderService.publishProject(project.id)
 
       if (editor?.Modal) {
         editor.Modal.open({

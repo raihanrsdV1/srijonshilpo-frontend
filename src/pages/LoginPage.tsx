@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../services/api'
+import { authService } from '../services/api'
 
 interface AuthResponse {
   token?: string
@@ -12,7 +12,10 @@ interface AuthResponse {
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ username: '', password: '' })
+  const [form, setForm] = useState({ 
+    username: 'jamdani_arts_user', 
+    password: 'jamdani123' 
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,17 +27,30 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    
+    console.log('Login attempt:', { username: form.username, passwordLength: form.password.length })
+    
     try {
-      const { data } = await api.post<AuthResponse>('/api/auth/login', form)
+      const data = await authService.login(form.username, form.password)
+      console.log('Login response:', data)
+      
       if (data?.token) {
         localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify({ username: data.username, email: data.email, role: data.role }))
-        navigate('/dashboard')
+        localStorage.setItem('user', JSON.stringify({ 
+          username: data.username, 
+          email: data.email, 
+          role: data.role 
+        }))
+        console.log('Login successful, navigating to dashboard')
+        navigate('/dashboard') // Navigate to dashboard first
       } else {
+        console.log('Login failed - no token in response')
         setError(data?.message || 'Login failed')
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Invalid username or password')
+      console.error('Login error:', err)
+      console.error('Error details:', err?.response?.data)
+      setError(err?.response?.data?.message || err?.message || 'Invalid username or password. Please check your credentials.')
     } finally {
       setLoading(false)
     }

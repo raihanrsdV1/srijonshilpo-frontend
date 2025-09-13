@@ -10,11 +10,34 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/auth/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Auth proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Auth proxy request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Auth proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
       },
       '/api/builder': {
         target: 'http://localhost:8083',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/builder/, '/api'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Builder proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            const newPath = req.url?.replace(/^\/api\/builder/, '/api') || req.url;
+            console.log('Builder proxy request:', req.method, req.url, '-> http://localhost:8083' + newPath);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Builder proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
       },
     },
   },
