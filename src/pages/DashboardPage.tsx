@@ -77,28 +77,106 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6 md:col-span-2 lg:col-span-2">
             <h2 className="text-lg font-medium mb-2">Welcome{user?.username ? `, ${user.username}` : ''}!</h2>
             <p className="text-gray-600">
-              You are signed in{user?.email ? ` as ${user.email}` : ''}. Manage your websites and see your published projects below.
+              You are signed in{user?.email ? ` as ${user.email}` : ''}. Manage your websites, e-commerce stores, and see your published projects below.
             </p>
           </div>
 
           {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium mb-4">Quick Actions</h3>
+            <h3 className="font-medium mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/projects')}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <span>🛠️</span>
-                <span>Manage Projects</span>
+                <div className="font-medium">�️ Create New Store</div>
+                <div className="text-sm text-gray-600">Build a new e-commerce website</div>
+              </button>
+              <button
+                onClick={() => navigate('/websites')}
+                className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="font-medium">🌐 Store Manager</div>
+                <div className="text-sm text-gray-600">Manage all your stores</div>
+              </button>
+            </div>
+          </div>
+
+          {/* My E-commerce Stores */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="font-medium mb-4">My E-commerce Stores</h3>
+            <div className="space-y-2">
+              {publishedProjects.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="text-gray-300 text-2xl mb-2">🏪</div>
+                  <p className="text-sm text-gray-500 mb-3">No stores yet</p>
+                  <button
+                    onClick={() => navigate('/projects')}
+                    className="text-xs bg-primary text-white px-3 py-1 rounded-full hover:bg-primary/80"
+                  >
+                    Create First Store
+                  </button>
+                </div>
+              ) : (
+                publishedProjects.map((project) => (
+                  <div key={project.id} className="border border-gray-200 rounded-lg p-3 hover:border-primary/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-lg">🏪</div>
+                        <div>
+                          <div className="font-medium text-sm">{project.name}</div>
+                          <div className="text-xs text-gray-500">{project.description}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => navigate(`/store/${project.id}`)}
+                          className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-primary/80"
+                        >
+                          Manage Store
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                      <span>Store ID: {project.slug}</span>
+                      <button
+                        onClick={() => viewLiveWebsite(project)}
+                        className="text-green-600 hover:underline"
+                      >
+                        View Live ↗
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium mb-4">Store Analytics</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Total Stores:</span>
+                <span className="font-medium">{publishedProjects.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Published:</span>
+                <span className="font-medium text-green-600">{publishedProjects.filter(p => p.isPublished).length}</span>
+              </div>
+              <button
+                onClick={() => navigate('/projects')}
+                className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/80 transition-colors text-sm font-medium mt-4"
+              >
+                Create New Store
               </button>
             </div>
           </div>
         </div>
 
-        {/* Published Websites Section */}
+        {/* Store Performance Section */}
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Your Published Websites</h3>
+          <h3 className="text-xl font-semibold mb-4">Your E-commerce Stores</h3>
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -106,50 +184,76 @@ export default function DashboardPage() {
             </div>
           ) : publishedProjects.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
-              <div className="text-gray-300 text-4xl mb-4">🌐</div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">No Published Websites</h4>
-              <p className="text-gray-600 mb-4">Create and publish your first website to see it here.</p>
+              <div className="text-gray-300 text-4xl mb-4">�</div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">No E-commerce Stores</h4>
+              <p className="text-gray-600 mb-4">Create your first online store to start selling products.</p>
               <button
                 onClick={() => navigate('/projects')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/80 transition-colors"
               >
-                Create Your First Website
+                Create Your First Store
               </button>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {publishedProjects.map((project) => (
-                <div key={project.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                <div key={project.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-l-4 border-l-primary">
                   <div className="flex items-start justify-between mb-3">
-                    <h4 className="text-lg font-medium text-gray-900">{project.name}</h4>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">🏪</div>
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-900">{project.name}</h4>
+                        <p className="text-sm text-gray-500">Store ID: {project.slug}</p>
+                      </div>
+                    </div>
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                       Live
                     </span>
                   </div>
                   
                   {project.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
+                    <p className="text-gray-600 text-sm mb-4">{project.description}</p>
                   )}
                   
-                  <div className="space-y-3">
-                    <div className="text-xs text-gray-500">
-                      <span className="font-medium">URL:</span> /{project.slug}
+                  {/* Store Stats */}
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">0</div>
+                        <div className="text-xs text-gray-500">Products</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">0</div>
+                        <div className="text-xs text-gray-500">Categories</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-gray-900">0</div>
+                        <div className="text-xs text-gray-500">Orders</div>
+                      </div>
                     </div>
-                    
+                  </div>
+                  
+                  <div className="space-y-2">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => viewLiveWebsite(project)}
-                        className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                        onClick={() => navigate(`/store/${project.id}`)}
+                        className="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/80 transition-colors text-sm font-medium"
                       >
-                        View Live Site
+                        Manage Store
                       </button>
                       <button
                         onClick={() => navigate(`/builder/${project.id}`)}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
                       >
-                        Edit
+                        Edit Design
                       </button>
                     </div>
+                    <button
+                      onClick={() => viewLiveWebsite(project)}
+                      className="w-full bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    >
+                      View Live Store ↗
+                    </button>
                   </div>
                 </div>
               ))}

@@ -33,6 +33,14 @@ body {
 }
 
 /* Utility classes for improved components */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -98,6 +106,55 @@ body {
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+  @apply transform -translate-y-1 shadow-lg transition-all duration-200;
+}
+
+/* E-commerce specific styles */
+.stats-card {
+  @apply bg-white p-6 rounded-lg shadow border-l-4;
+}
+
+.stats-card.primary {
+  @apply border-l-primary;
+}
+
+.stats-card.success {
+  @apply border-l-green-500;
+}
+
+.stats-card.warning {
+  @apply border-l-yellow-500;
+}
+
+.stats-card.danger {
+  @apply border-l-red-500;
+}
+
+.product-card {
+  @apply bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200;
+}
+
+.inventory-alert {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.inventory-alert.in-stock {
+  @apply bg-green-100 text-green-800;
+}
+
+.inventory-alert.low-stock {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.inventory-alert.out-of-stock {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Tab navigation */
+.tab-active {
+  @apply border-primary text-primary border-b-2;
+}
+
+.tab-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2;
 }

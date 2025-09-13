@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
+    port: 5174,
     proxy: {
       '/api/auth': {
         target: 'http://localhost:8081',
@@ -36,6 +36,40 @@ export default defineConfig({
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
             console.log('Builder proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      '/api/ecommerce': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ecommerce/, '/api'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('E-commerce proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            const newPath = req.url?.replace(/^\/api\/ecommerce/, '/api') || req.url;
+            console.log('E-commerce proxy request:', req.method, req.url, '-> http://localhost:8082' + newPath);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('E-commerce proxy response:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      '/api/files': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/files/, '/api/files'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Files proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            const newPath = req.url?.replace(/^\/api\/files/, '/api/files') || req.url;
+            console.log('Files proxy request:', req.method, req.url, '-> http://localhost:8082' + newPath);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Files proxy response:', proxyRes.statusCode, req.url);
           });
         },
       },

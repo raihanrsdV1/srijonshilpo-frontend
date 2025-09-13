@@ -5,6 +5,9 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import ProjectsPage from './pages/ProjectsPage'
 import BuilderPage from './pages/BuilderPage'
+import EcommercePage from './pages/EcommercePage'
+import WebsiteManagementPage from './pages/WebsiteManagementPage'
+import StoreManagementPage from './pages/StoreManagementPage'
 
 function App() {
   return (
@@ -14,8 +17,11 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/websites" element={<WebsiteManagementPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/builder/:projectId" element={<BuilderPage />} />
+      <Route path="/store/:storeId" element={<StoreManagementPage />} />
+      <Route path="/ecommerce" element={<EcommercePage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
