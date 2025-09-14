@@ -63,16 +63,39 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Dashboard</h1>
-          <button onClick={logout} className="text-sm text-red-600 hover:underline">Logout</button>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Modern Header */}
+      <header className="relative z-10 bg-white/80 backdrop-blur-md border-b border-white/50 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-xl">🎨</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-sm text-gray-600 font-medium">Welcome to Srijon Shilpo</p>
+            </div>
+          </div>
+          <button 
+            onClick={logout} 
+            className="bg-white/70 backdrop-blur-sm border border-white/50 text-red-600 hover:text-red-700 px-4 py-2 rounded-xl font-medium transition-all duration-300 hover:bg-white/90 hover:shadow-lg transform hover:scale-105"
+          >
+            🚪 Logout
+          </button>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Welcome Card */}
           <div className="bg-white rounded-lg shadow p-6 md:col-span-2 lg:col-span-2">
             <h2 className="text-lg font-medium mb-2">Welcome{user?.username ? `, ${user.username}` : ''}!</h2>

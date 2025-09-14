@@ -111,164 +111,255 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading projects...</p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        </div>
+        
+        {/* Loading Content */}
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="w-20 h-20 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-20 animate-pulse"></div>
+          </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            Loading Your Projects
+          </h2>
+          <p className="text-gray-600 font-medium">
+            Preparing your creative workspace...
+          </p>
+          
+          {/* Loading dots animation */}
+          <div className="flex justify-center space-x-2 mt-4">
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Projects</h1>
-              <p className="text-gray-600">Create and manage your web page builder projects</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Modern Header */}
+        <div className="text-center mb-12">
+          <div className="relative">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-4">
+              Your Projects
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Create stunning websites with our visual builder. Bring your ideas to life with drag-and-drop simplicity.
+            </p>
+          </div>
+          
+          {/* Glassmorphism Create Button */}
+          <div className="mt-8">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+              className="group relative inline-flex items-center gap-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl px-8 py-4 text-gray-800 font-semibold text-lg hover:bg-white/30 hover:border-white/50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-lg"
             >
-              <span>+</span> New Project
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 text-lg">✨ Create New Project</span>
+              <div className="relative z-10 w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold transform group-hover:rotate-90 transition-transform duration-300">
+                +
+              </div>
             </button>
           </div>
         </div>
 
+        {/* Empty State or Projects Grid */}
         {projects.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-xl shadow-md p-12 max-w-md mx-auto">
-              <div className="text-gray-300 text-6xl mb-4">📄</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects yet</h3>
-              <p className="text-gray-600 mb-6">Create your first project to get started with the visual builder</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Create Your First Project
-              </button>
+          /* Empty State */
+          <div className="text-center py-20">
+            <div className="relative inline-block">
+              <div className="w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 mx-auto backdrop-blur-sm border border-white/50 shadow-xl">
+                <span className="text-6xl">🎨</span>
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse"></div>
             </div>
+            <h3 className="text-3xl font-bold text-gray-800 mb-4">Ready to Create Magic?</h3>
+            <p className="text-xl text-gray-600 mb-8 max-w-md mx-auto">
+              Your creative journey starts here. Build beautiful websites without any coding knowledge.
+            </p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white px-8 py-4 rounded-2xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-semibold text-lg"
+            >
+              🚀 Create Your First Project
+            </button>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="divide-y divide-gray-100">
-              {projects.map((project) => (
-                <div key={project.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-                        {project.isPublished && (
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                            Published
-                          </span>
-                        )}
-                      </div>
-                      
-                      {project.description ? (
-                        <p className="text-gray-600 mb-3 line-clamp-2">{project.description}</p>
-                      ) : (
-                        <p className="text-gray-400 mb-3 italic">No description provided</p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>Created: {formatDate(project.createdAt)}</span>
-                        {project.updatedAt !== project.createdAt && (
-                          <span>Updated: {formatDate(project.updatedAt)}</span>
-                        )}
-                      </div>
+          /* Projects Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {projects.map((project, index) => (
+              <div 
+                key={project.id} 
+                className="group relative bg-white/60 backdrop-blur-md border border-white/50 rounded-3xl p-6 hover:bg-white/80 hover:border-white/70 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl shadow-lg"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Project Card Gradient Overlay */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Project Status Badge */}
+                <div className="absolute -top-2 -right-2">
+                  {project.isPublished ? (
+                    <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg animate-pulse">
+                      ✅ LIVE
                     </div>
-                    
-                    <div className="flex items-center gap-2 ml-6">
-                      <button
-                        onClick={() => navigate(`/builder/${project.id}`)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                      >
-                        Edit
-                      </button>
-                      
-                      {!project.isPublished ? (
-                        <button
-                          onClick={() => publishProject(project.id)}
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-                        >
-                          Publish
-                        </button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => viewLiveWebsite(project)}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
-                          >
-                            View Live
-                          </button>
-                          <span className="text-xs text-gray-500 self-center">
-                            {project.slug && `/${project.slug}`}
-                          </span>
-                        </div>
-                      )}
-                      
-                      <button
-                        onClick={() => deleteProject(project.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
-                      >
-                        Delete
-                      </button>
+                  ) : (
+                    <div className="bg-gradient-to-r from-orange-400 to-yellow-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg">
+                      📝 DRAFT
+                    </div>
+                  )}
+                </div>
+
+                {/* Project Content */}
+                <div className="relative z-10 space-y-4">
+                  {/* Project Icon & Title */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                      {project.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-gray-800 truncate group-hover:text-purple-700 transition-colors duration-300">
+                        {project.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Created {formatDate(project.createdAt)}
+                      </p>
                     </div>
                   </div>
+
+                  {/* Project Description */}
+                  <div className="min-h-[60px]">
+                    {project.description ? (
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                        {project.description}
+                      </p>
+                    ) : (
+                      <p className="text-gray-400 text-sm italic">
+                        ✨ Add a description to make your project shine
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Project Actions */}
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200/50">
+                    <button
+                      onClick={() => navigate(`/builder/${project.id}`)}
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl hover:shadow-lg transition-all duration-300 font-medium text-sm transform hover:scale-105"
+                    >
+                      ✏️ Edit
+                    </button>
+                    
+                    {!project.isPublished ? (
+                      <button
+                        onClick={() => publishProject(project.id)}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:shadow-lg transition-all duration-300 font-medium text-sm transform hover:scale-105"
+                      >
+                        🚀 Publish
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => viewLiveWebsite(project)}
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-4 py-2 rounded-xl hover:shadow-lg transition-all duration-300 font-medium text-sm transform hover:scale-105"
+                      >
+                        👁️ View Live
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => deleteProject(project.id)}
+                      className="bg-gradient-to-r from-red-400 to-red-600 text-white px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-300 font-medium text-sm transform hover:scale-105"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+
+                  {/* Live URL Preview */}
+                  {project.isPublished && project.slug && (
+                    <div className="pt-2 border-t border-gray-200/50">
+                      <div className="bg-gray-50/50 rounded-lg px-3 py-2">
+                        <span className="text-xs text-gray-500 font-mono">
+                          🌐 /{project.slug}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
       {/* Create Project Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Create New Project</h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/90 backdrop-blur-md border border-white/50 rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-fadeIn">
+            {/* Modal Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span className="text-2xl text-white">✨</span>
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Create New Project
+              </h2>
+              <p className="text-gray-600 mt-2">Start building your amazing website</p>
+            </div>
             
-            <div className="space-y-4">
+            {/* Form Fields */}
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Project Name *
                 </label>
                 <input
                   type="text"
                   value={newProject.name}
                   onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter project name"
+                  className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 placeholder-gray-500"
+                  placeholder="Enter an awesome project name"
                   maxLength={100}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Description
                 </label>
                 <textarea
                   value={newProject.description}
                   onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 placeholder-gray-500 resize-none"
                   rows={3}
-                  placeholder="Enter project description"
+                  placeholder="Describe your project (optional)"
                   maxLength={500}
                 />
               </div>
             </div>
             
-            <div className="flex space-x-3 mt-6">
+            {/* Action Buttons */}
+            <div className="flex gap-4 mt-8">
               <button
                 onClick={() => {
                   setShowCreateModal(false)
                   setNewProject({ name: '', description: '' })
                 }}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                className="flex-1 px-6 py-3 text-gray-700 bg-gray-200/70 backdrop-blur-sm border border-gray-300/50 rounded-xl hover:bg-gray-300/70 transition-all duration-300 font-semibold transform hover:scale-105"
                 disabled={creating}
               >
                 Cancel
@@ -276,9 +367,18 @@ export default function ProjectsPage() {
               <button
                 onClick={createProject}
                 disabled={!newProject.name.trim() || creating}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transform hover:scale-105 disabled:transform-none"
               >
-                {creating ? 'Creating...' : 'Create'}
+                {creating ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Creating...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    🚀 Create Project
+                  </div>
+                )}
               </button>
             </div>
           </div>

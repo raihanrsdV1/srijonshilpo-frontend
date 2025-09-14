@@ -1,2 +1,473 @@
 /* GrapeJS CSS - Import the main stylesheet */
 @import 'grapesjs/dist/css/grapes.min.css';
+
+/* Smart Objects CSS */
+@import './smartObjects.css';
+
+/* Modern Builder Interface Styling */
+.builder-container {
+  background: linear-gradient(135deg, 
+    #667eea 0%, 
+    #764ba2 25%, 
+    #667eea 50%, 
+    #f093fb 75%, 
+    #f5576c 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  height: 100vh; /* lock to viewport to allow inner panels to scroll */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glassmorphism Header */
+.builder-header {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  position: relative;
+  z-index: 1000;
+}
+
+.builder-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Modern Button Styling */
+.builder-header button {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.builder-header button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  transition: left 0.6s;
+}
+
+.builder-header button:hover::before {
+  left: 100%;
+}
+
+.builder-header button:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Smart Objects Button Special Styling */
+.builder-header button:nth-of-type(1) {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+.builder-header button:nth-of-type(1):hover {
+  background: linear-gradient(135deg, #5a6fd8, #6a42a0) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 15px 30px rgba(102, 126, 234, 0.6) !important;
+}
+
+/* Save Button Styling */
+.builder-header button:nth-of-type(2) {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+.builder-header button:nth-of-type(2):hover {
+  background: linear-gradient(135deg, #0d9468, #047857) !important;
+  box-shadow: 0 15px 30px rgba(16, 185, 129, 0.6) !important;
+}
+
+/* Publish Button Styling */
+.builder-header button:nth-of-type(3) {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+.builder-header button:nth-of-type(3):hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af) !important;
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.6) !important;
+}
+
+/* Header Text Styling */
+.builder-header h1 {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.builder-header p {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Back Button Special Styling */
+.builder-header button:first-child {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.builder-header button:first-child:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: white !important;
+}
+
+/* Saving Indicator */
+.builder-header .flex.items-center.gap-2 {
+  background: rgba(59, 130, 246, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 8px 16px !important;
+  color: #60a5fa !important;
+}
+
+/* Builder Workspace */
+.builder-workspace {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(5px);
+  border-radius: 20px 20px 0 0;
+  margin-top: -10px;
+  overflow: hidden; /* keep canvas chrome tidy */
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+  min-height: 0; /* allow children to flex and scroll */
+  height: calc(100vh - 73px); /* header ~73px tall */
+}
+
+/* Left Sidebar (Blocks) */
+.builder-sidebar-left {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 0; /* needed for nested scroll container */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.builder-sidebar-top {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.blocks-container {
+  /* Ensure grapesjs appends blocks here and they are visible */
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  overflow-y: auto; /* make left panel independently scrollable */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.4) transparent;
+}
+
+/* WebKit scrollbar styling */
+.blocks-container::-webkit-scrollbar {
+  width: 10px;
+}
+.blocks-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.blocks-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+.blocks-container:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+/* GrapeJS Editor Styling */
+.gjs-editor {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* GrapeJS Panels */
+.gjs-pn-panels {
+  background: rgba(30, 41, 59, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.gjs-pn-panel {
+  background: transparent !important;
+}
+
+.gjs-pn-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 8px !important;
+  margin: 2px !important;
+  transition: all 0.3s ease !important;
+}
+
+.gjs-pn-btn:hover,
+.gjs-pn-btn.gjs-pn-active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Blocks Panel */
+.gjs-blocks-cs {
+  background: rgba(30, 41, 59, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  margin: 8px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.gjs-block-category {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-size: 12px !important;
+  padding: 12px 16px !important;
+}
+
+.gjs-block {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  margin: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: white !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.gjs-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gjs-block:hover::before {
+  opacity: 1;
+}
+
+.gjs-block:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.gjs-block-label {
+  color: white !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Smart Objects Block Special Styling */
+.smart-object-block {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.smart-object-block[data-category="ecommerce"] {
+  border-left: 4px solid #10b981 !important;
+  background: linear-gradient(135deg, 
+    rgba(16, 185, 129, 0.1) 0%, 
+    rgba(16, 185, 129, 0.05) 100%
+  ) !important;
+}
+
+.smart-object-block[data-category="content"] {
+  border-left: 4px solid #3b82f6 !important;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.1) 0%, 
+    rgba(59, 130, 246, 0.05) 100%
+  ) !important;
+}
+
+.smart-object-block[data-category="layout"] {
+  border-left: 4px solid #8b5cf6 !important;
+  background: linear-gradient(135deg, 
+    rgba(139, 92, 246, 0.1) 0%, 
+    rgba(139, 92, 246, 0.05) 100%
+  ) !important;
+}
+
+.smart-object-block[data-category="interactive"] {
+  border-left: 4px solid #f59e0b !important;
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.1) 0%, 
+    rgba(245, 158, 11, 0.05) 100%
+  ) !important;
+}
+
+/* Canvas Styling */
+.gjs-cv-canvas {
+  background: white !important;
+  border-radius: 12px !important;
+  margin: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  overflow: auto !important; /* allow canvas scroll independently */
+}
+
+/* Styles Panel */
+.gjs-sm-sectors {
+  background: rgba(30, 41, 59, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  margin: 8px !important;
+}
+
+.gjs-sm-sector {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.gjs-sm-sector .gjs-sm-title {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+}
+
+.gjs-sm-property {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.gjs-sm-property:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Smart Objects Mode */
+.smart-objects-mode .gjs-blocks-cs {
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.1) 0%, 
+    rgba(118, 75, 162, 0.1) 100%
+  ) !important;
+  border: 1px solid rgba(102, 126, 234, 0.2) !important;
+}
+
+.smart-objects-mode .gjs-block-category {
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.2) 0%, 
+    rgba(118, 75, 162, 0.2) 100%
+  ) !important;
+  color: #f8fafc !important;
+}
+
+/* Customizer Panel */
+.fixed.right-0 {
+  background: rgba(30, 41, 59, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .builder-header {
+    padding: 16px !important;
+  }
+  
+  .builder-header .flex {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  
+  .builder-header .space-x-3 {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  .builder-header button {
+    min-width: 120px !important;
+    font-size: 14px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* Loading Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Floating Elements */
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
