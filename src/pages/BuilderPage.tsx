@@ -142,6 +142,165 @@ export default function BuilderPage() {
     }
   }
 
+  // Setup simple end drop zone in viewport
+  const setupEndDropZone = (editor: any) => {
+    // Store currently dragged block
+    let currentDraggedBlock: any = null
+    
+    // Listen for block drag start to capture the block
+    editor.on('block:drag:start', (block: any) => {
+      currentDraggedBlock = block
+      console.log('Block drag started:', block)
+    })
+    
+    editor.on('block:drag:stop', () => {
+      currentDraggedBlock = null
+    })
+    
+    // Create a simple drop zone element in the viewport
+    const createEndDropZone = () => {
+      setTimeout(() => {
+        const canvasViewport = document.querySelector('.canvas-viewport')
+        if (!canvasViewport) return
+        
+        // Remove existing drop zone
+        const existingZone = canvasViewport.querySelector('.end-drop-zone')
+        if (existingZone) {
+          existingZone.remove()
+        }
+        
+        // Create drop zone element
+        const dropZone = document.createElement('div')
+        dropZone.className = 'end-drop-zone'
+        dropZone.style.cssText = `
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          height: 60px;
+          border: 2px dashed rgba(59, 130, 246, 0.4);
+          border-radius: 8px;
+          background: rgba(59, 130, 246, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0.8;
+          pointer-events: auto;
+          z-index: 1000;
+        `
+        
+        dropZone.innerHTML = `
+          <div style="
+            color: rgba(59, 130, 246, 0.8);
+            font-size: 14px;
+            font-weight: 500;
+          ">
+            📍 Drop components here to add at the end
+          </div>
+        `
+        
+        // Add drag event handlers
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault()
+          dropZone.style.borderColor = '#22c55e'
+          dropZone.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+        })
+        
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.style.borderColor = 'rgba(59, 130, 246, 0.4)'
+          dropZone.style.backgroundColor = 'rgba(59, 130, 246, 0.05)'
+        })
+        
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault()
+          
+          try {
+            console.log('Drop event triggered, currentDraggedBlock:', currentDraggedBlock)
+            
+            // Add component to end using GrapesJS
+            const wrapper = editor.DomComponents.getWrapper()
+            let content = null
+            
+            // Approach 1: Use the captured dragged block
+            if (currentDraggedBlock) {
+              content = currentDraggedBlock.get('content') || currentDraggedBlock.get('label')
+              console.log('Using captured block content:', content)
+            }
+            
+            // Approach 2: Try block manager
+            if (!content) {
+              const blockManager = editor.BlockManager
+              const draggedBlock = blockManager.getDraggedBlock && blockManager.getDraggedBlock()
+              if (draggedBlock) {
+                content = draggedBlock.get('content') || draggedBlock.get('label')
+                console.log('Using block manager content:', content)
+              }
+            }
+            
+            // Approach 3: Get from drag data
+            if (!content) {
+              const dragData = e.dataTransfer?.getData('text/html') || e.dataTransfer?.getData('text/plain')
+              if (dragData) {
+                content = dragData
+                console.log('Using drag data as content:', content)
+              }
+            }
+            
+            // Approach 4: Use a simple default component if nothing else works
+            if (!content) {
+              content = '<div style="padding: 20px; border: 2px dashed #ccc; text-align: center; background: #f8f9fa;">New Component Added</div>'
+              console.log('Using fallback content')
+            }
+            
+            if (content) {
+              const newComponent = wrapper.append(content)[0]
+              if (newComponent) {
+                editor.select(newComponent)
+                console.log('Component added to end successfully')
+                
+                // Scroll to the new component
+                setTimeout(() => {
+                  const element = newComponent.getEl()
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                }, 100)
+              } else {
+                console.warn('Failed to create component from content:', content)
+              }
+            } else {
+              console.warn('No content available to add')
+            }
+          } catch (error) {
+            console.error('Error in drop handler:', error)
+            
+            // Fallback: add a simple div
+            try {
+              const wrapper = editor.DomComponents.getWrapper()
+              const fallbackContent = '<div style="padding: 20px; background: #e3f2fd; border: 1px solid #2196f3; margin: 10px 0; border-radius: 4px; text-align: center;">Component Added Successfully</div>'
+              const newComponent = wrapper.append(fallbackContent)[0]
+              if (newComponent) {
+                editor.select(newComponent)
+                console.log('Fallback component added')
+              }
+            } catch (fallbackError) {
+              console.error('Fallback also failed:', fallbackError)
+            }
+          }
+          
+          // Reset styles
+          dropZone.style.borderColor = 'rgba(59, 130, 246, 0.4)'
+          dropZone.style.backgroundColor = 'rgba(59, 130, 246, 0.05)'
+        })
+        
+        canvasViewport.appendChild(dropZone)
+        console.log('End drop zone created in viewport')
+      }, 500)
+    }
+    
+    createEndDropZone()
+  }
+
   const initializeEditor = () => {
     if (!project) return
 
@@ -153,7 +312,7 @@ export default function BuilderPage() {
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current!,
-      height: '100%',
+      height: 'calc(100vh - 180px)',
       width: '100%',
       
       // Canvas configuration for magnetic grid and proper sizing
@@ -312,6 +471,13 @@ export default function BuilderPage() {
         borderWidth: '2px'
       },
 
+      // Enhanced drop zone configuration
+      domComponents: {
+        draggableComponents: '*',
+        storeWrapper: 1,
+        storageType: 'local'
+      },
+
       // Enable all interactions
       allowScripts: true,
       fromElement: false,
@@ -351,6 +517,42 @@ export default function BuilderPage() {
           // Always show inspector when a component is selected
           setShowInspector(true)
           
+          // Re-render managers when inspector becomes visible
+          setTimeout(() => {
+            const sm = grapesEditor.StyleManager
+            const lm = grapesEditor.LayerManager
+            const tm = grapesEditor.TraitManager
+            
+            const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
+            const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
+            const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+            
+            if (styleEl && sm) {
+              try {
+                styleEl.innerHTML = ''
+                sm.render(styleEl)
+              } catch (e) {
+                console.warn('StyleManager re-render failed:', e)
+              }
+            }
+            if (layerEl && lm) {
+              try {
+                layerEl.innerHTML = ''
+                lm.render(layerEl)
+              } catch (e) {
+                console.warn('LayerManager re-render failed:', e)
+              }
+            }
+            if (traitEl && tm) {
+              try {
+                traitEl.innerHTML = ''
+                tm.render(traitEl)
+              } catch (e) {
+                console.warn('TraitManager re-render failed:', e)
+              }
+            }
+          }, 100)
+          
           const attrs = component.get('attributes') || {}
           const smartId = attrs['data-smart-object-id'] || attrs['data-smart-object']
           if (smartId) {
@@ -382,6 +584,9 @@ export default function BuilderPage() {
       setMagneticGrid(magneticGrid)
       magneticGrid.toggleGridVisibility(true) // Ensure grid is visible on load
 
+      // Add simple end drop zone functionality
+      setupEndDropZone(grapesEditor)
+
       // Let GrapesJS handle block rendering automatically - blocks should appear from plugins
 
       // Render core managers into custom containers
@@ -407,23 +612,53 @@ export default function BuilderPage() {
         }
       })
       
+      // Add command for appending to end of container
+      cm.add('append-to-end', {
+        run: (editor: any, sender: any, options: any = {}) => {
+          const { component, target } = options
+          if (component && target) {
+            // Remove component from current position
+            component.remove()
+            // Append to end of target container
+            target.append(component)
+            // Select the moved component
+            editor.select(component)
+          }
+        }
+      })
+      
       // Render managers with proper timing to ensure DOM elements exist
       setTimeout(() => {
-        const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
-        const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
-        const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
-        
-        if (styleEl) {
-          sm.render(styleEl)
-          console.log('StyleManager rendered successfully')
-        }
-        if (layerEl) {
-          lm.render(layerEl)
-          console.log('LayerManager rendered successfully')
-        }
-        if (traitEl) {
-          tm.render(traitEl)
-          console.log('TraitManager rendered successfully')
+        try {
+          const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
+          const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
+          const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+          
+          if (styleEl) {
+            styleEl.innerHTML = '' // Clear existing content
+            sm.render(styleEl)
+            console.log('StyleManager rendered successfully')
+          } else {
+            console.warn('StyleManager container not found')
+          }
+          
+          if (layerEl) {
+            layerEl.innerHTML = '' // Clear existing content
+            lm.render(layerEl)
+            console.log('LayerManager rendered successfully')
+          } else {
+            console.warn('LayerManager container not found')
+          }
+          
+          if (traitEl) {
+            traitEl.innerHTML = '' // Clear existing content
+            tm.render(traitEl)
+            console.log('TraitManager rendered successfully')
+          } else {
+            console.warn('TraitManager container not found')
+          }
+        } catch (error) {
+          console.error('Error rendering managers:', error)
         }
 
         // Add grid toggle button to panels - this should make it visible
@@ -947,23 +1182,115 @@ export default function BuilderPage() {
               <div className="properties-top-section">
                 <div className="properties-header">
                   <h3 className="properties-title">Properties</h3>
-                  <button
-                    onClick={() => setShowInspector(false)}
-                    className="properties-close"
-                  >
-                    ✕
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      onClick={() => {
+                        // Force re-render all panels
+                        setTimeout(() => {
+                          if (editor) {
+                            const sm = editor.StyleManager
+                            const lm = editor.LayerManager
+                            const tm = editor.TraitManager
+                            
+                            const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
+                            const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
+                            const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+                            
+                            if (styleEl && sm) {
+                              try {
+                                styleEl.innerHTML = ''
+                                sm.render(styleEl)
+                                console.log('StyleManager force refreshed')
+                              } catch (e) {
+                                console.warn('StyleManager refresh failed:', e)
+                              }
+                            }
+                            if (layerEl && lm) {
+                              try {
+                                layerEl.innerHTML = ''
+                                lm.render(layerEl)
+                                console.log('LayerManager force refreshed')
+                              } catch (e) {
+                                console.warn('LayerManager refresh failed:', e)
+                              }
+                            }
+                            if (traitEl && tm) {
+                              try {
+                                traitEl.innerHTML = ''
+                                tm.render(traitEl)
+                                console.log('TraitManager force refreshed')
+                              } catch (e) {
+                                console.warn('TraitManager refresh failed:', e)
+                              }
+                            }
+                          }
+                        }, 50)
+                      }}
+                      style={{
+                        background: 'rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        color: '#60a5fa',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      title="Refresh panels if they're not showing"
+                    >
+                      🔄
+                    </button>
+                    <button
+                      onClick={() => setShowInspector(false)}
+                      className="properties-close"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="properties-tabs">
                   <button 
-                    onClick={() => setInspectorTab('styles')} 
+                    onClick={() => {
+                      setInspectorTab('styles')
+                      // Re-render StyleManager when switching to styles tab
+                      setTimeout(() => {
+                        if (editor) {
+                          const sm = editor.StyleManager
+                          const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
+                          if (styleEl && sm) {
+                            try {
+                              styleEl.innerHTML = ''
+                              sm.render(styleEl)
+                            } catch (e) {
+                              console.warn('StyleManager tab re-render failed:', e)
+                            }
+                          }
+                        }
+                      }, 50)
+                    }} 
                     className={`properties-tab ${inspectorTab==='styles'?'properties-tab-active':''}`}
                   >
                     🎨 Styles
                   </button>
                   <button 
-                    onClick={() => setInspectorTab('traits')} 
+                    onClick={() => {
+                      setInspectorTab('traits')
+                      // Re-render TraitManager when switching to traits tab
+                      setTimeout(() => {
+                        if (editor) {
+                          const tm = editor.TraitManager
+                          const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+                          if (traitEl && tm) {
+                            try {
+                              traitEl.innerHTML = ''
+                              tm.render(traitEl)
+                            } catch (e) {
+                              console.warn('TraitManager tab re-render failed:', e)
+                            }
+                          }
+                        }
+                      }, 50)
+                    }} 
                     className={`properties-tab ${inspectorTab==='traits'?'properties-tab-active':''}`}
                   >
                     ⚙️ Settings

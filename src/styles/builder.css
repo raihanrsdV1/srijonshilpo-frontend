@@ -29,6 +29,7 @@
   height: 64px;
   flex-shrink: 0;
   z-index: 1000;
+  position: relative;
 }
 
 .header-back-btn {
@@ -187,10 +188,11 @@
 
 /* Canvas Area */
 .builder-canvas-area {
-  background: rgba(24, 24, 39, 0.6);
+  background: transparent;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
 }
 
 .canvas-controls {
@@ -201,6 +203,8 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  z-index: 1001;
+  position: relative;
 }
 
 .canvas-controls-left {
@@ -303,40 +307,54 @@
 
 .canvas-container {
   flex: 1;
-  padding: 24px;
+  padding: 20px;
   overflow: auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  min-height: 100%;
+  background: transparent;
 }
 
 .canvas-viewport {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: white;
+  width: 100%;
+  max-width: 100%;
 }
 
 .canvas-viewport-desktop {
-  width: 1140px;
-  background: #f8f9fa;
+  width: 100%;
+  max-width: none;
+  background: white;
+  border: none;
 }
 
 .canvas-viewport-tablet {
   width: 768px;
-  background: #f1f3f4;
+  max-width: 90vw;
+  background: white;
+  border: none;
+  min-height: 800px;
 }
 
 .canvas-viewport-mobile {
   width: 375px;
-  background: #e8eaed;
+  max-width: 90vw;
+  background: white;
+  border: none;
+  min-height: 800px;
 }
 
 .canvas-editor {
   width: 100%;
-  height: 100%;
-  min-height: 600px;
+  height: calc(100vh - 180px);
+  min-height: calc(100vh - 180px);
 }
 
 /* Right Properties Panel */
@@ -822,9 +840,15 @@
 }
 /* GrapeJS Editor Styling */
 .gjs-editor {
-  border-radius: 20px !important;
-  overflow: hidden !important;
+  /* border-radius: 20px !important;
+  overflow: hidden !important; */
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  display:flex;
+  justify-content: center;
+}
+
+.gjs-one-bg{
+  background-color: transparent !important;
 }
 
 /* GrapeJS Panel Buttons - Make them visible in header */
@@ -982,10 +1006,11 @@
 /* Canvas Styling */
 .gjs-cv-canvas {
   background: white !important;
-  border-radius: 12px !important;
-  margin: 16px !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
-  overflow: auto !important; /* allow canvas scroll independently */
+  border-radius: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  overflow: auto !important;
+  border: none !important;
 }
 
 /* Styles Panel */
@@ -1422,8 +1447,8 @@
 
 .gjs-frame {
   border: none !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   background: white !important;
   overflow: visible !important;
 }
@@ -1686,4 +1711,212 @@
 #inspector-layers .gjs-lm-layer.gjs-lm-layer-sel {
   background: rgba(59, 130, 246, 0.2) !important;
   border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+/* End Drop Zone Indicator Styles */
+.end-drop-indicator {
+  position: relative;
+  height: 4px;
+  background: linear-gradient(90deg, transparent 10%, #3b82f6 50%, transparent 90%);
+  margin: 8px 0;
+  border-radius: 2px;
+  opacity: 0.8;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 9999;
+  transform: scaleX(0);
+  transform-origin: center;
+}
+
+.end-drop-indicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.end-drop-indicator::after {
+  content: 'Drop here';
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  transform: translateX(-50%);
+  background: rgba(15, 15, 35, 0.9);
+  color: #60a5fa;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Permanent End Drop Zone Styles */
+.permanent-end-drop-zone {
+  position: relative !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  width: 100% !important;
+  margin: 20px 0 !important;
+  border: 2px dashed rgba(59, 130, 246, 0.3) !important;
+  border-radius: 8px !important;
+  background: rgba(59, 130, 246, 0.05) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  opacity: 0.7 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+
+.permanent-end-drop-zone:hover {
+  border-color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  opacity: 1 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+}
+
+.permanent-end-drop-zone.drag-active {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  animation: pulse-green 1s infinite !important;
+}
+
+/* Pulse animations */
+@keyframes pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+  }
+  50% {
+    border-color: #16a34a;
+    background: rgba(34, 197, 94, 0.15);
+  }
+}
+
+/* Enhanced container drop feedback */
+.gjs-comp-container-drop-active {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 4px !important;
+  background: rgba(59, 130, 246, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+.gjs-comp-container-drop-hover {
+  outline: 2px solid #22c55e !important;
+  outline-offset: 4px !important;
+  background: rgba(34, 197, 94, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Improved drop zone visibility */
+.gjs-dv-placeholder {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 4px !important;
+  min-height: 40px !important;
+  position: relative !important;
+}
+
+.gjs-dv-placeholder::after {
+  content: 'Drop component here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* Enhanced visual feedback for droppable areas */
+.droppable-area-active {
+  position: relative !important;
+}
+
+.droppable-area-active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px dashed rgba(59, 130, 246, 0.6);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Add styles for better drag feedback within canvas */
+.gjs-cv-canvas .permanent-end-drop-zone {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Ensure end zone is always visible at bottom */
+.gjs-cv-canvas body {
+  padding-bottom: 60px !important;
+}
+
+/* Style for when component is being dragged over the end zone */
+.end-zone-drag-over {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  transform: scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* Floating drop hint */
+.drop-hint-floating {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 15, 35, 0.95);
+  color: #60a5fa;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  pointer-events: none;
+  animation: fadeInFloat 0.3s ease;
+}
+
+@keyframes fadeInFloat {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
