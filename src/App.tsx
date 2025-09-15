@@ -6,7 +6,6 @@ import DashboardPage from './pages/DashboardPage'
 import ProjectsPage from './pages/ProjectsPage'
 import BuilderPage from './pages/BuilderPage'
 import EcommercePage from './pages/EcommercePage'
-import WebsiteManagementPage from './pages/WebsiteManagementPage'
 import StoreManagementPage from './pages/StoreManagementPage'
 
 function App() {
@@ -17,7 +16,6 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
       <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/websites" element={<WebsiteManagementPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/builder/:projectId" element={<BuilderPage />} />
       <Route path="/store/:storeId" element={<StoreManagementPage />} />

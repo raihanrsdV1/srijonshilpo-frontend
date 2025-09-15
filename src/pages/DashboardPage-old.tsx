@@ -49,30 +49,24 @@ export default function DashboardPage() {
     }
   }
 
-  const logout = async () => {
-    try {
-      // Clear local storage and navigate to login
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      navigate('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      navigate('/login')
-    }
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    navigate('/login')
   }
 
   const viewLiveWebsite = (project: Project) => {
-    const liveUrl = `http://localhost:8084/live/${project.slug}`
-    window.open(liveUrl, '_blank')
+    if (project.slug) {
+      const url = `http://localhost:8083/public/sites/${project.slug}/render`
+      window.open(url, '_blank')
+    }
   }
 
   return (
     <div className="min-h-screen" style={{
       background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
-      backgroundSize: '300% 300%',
-      animation: 'gradientShift 8s ease infinite'
+      backgroundSize: '400% 400%',
+      animation: 'gradientShift 20s ease infinite'
     }}>
       {/* Inject animations */}
       <style>{`
@@ -83,7 +77,7 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      {/* Header */}
+      {/* Modern Header */}
       <header style={{
         background: 'rgba(15, 15, 35, 0.95)',
         backdropFilter: 'blur(20px)',
@@ -98,10 +92,10 @@ export default function DashboardPage() {
               <span className="text-blue-400 text-xl font-bold">S</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-              <p className="text-sm font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Welcome to Srijon Shilpo
-              </p>
+              <h1 className="text-2xl font-bold text-white">
+                Dashboard
+              </h1>
+              <p className="text-sm font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Welcome to Srijon Shilpo</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -132,59 +126,110 @@ export default function DashboardPage() {
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Welcome Card */}
           <div style={{
             background: 'rgba(15, 15, 35, 0.95)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)'
-          }} className="rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2 text-white">
-              Welcome{user?.username ? `, ${user.username}` : ''}!
-            </h2>
+          }} className="rounded-lg p-6 md:col-span-2 lg:col-span-2">
+            <h2 className="text-lg font-medium mb-2 text-white">Welcome{user?.username ? `, ${user.username}` : ''}!</h2>
             <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              You are signed in{user?.email ? ` as ${user.email}` : ''}. 
-              Manage your e-commerce stores and see your published projects below.
+              You are signed in{user?.email ? ` as ${user.email}` : ''}. Manage your websites, e-commerce stores, and see your published projects below.
             </p>
           </div>
-        </div>
 
-        {/* Dashboard Overview */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
           {/* Quick Actions */}
           <div style={{
             background: 'rgba(15, 15, 35, 0.95)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(20px)'
           }} className="rounded-lg p-6">
-            <h3 className="text-lg font-medium mb-4 text-white">Quick Actions</h3>
+            <h3 className="font-medium mb-4 text-white">Quick Actions</h3>
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/projects')}
                 style={{
-                  background: 'rgba(59, 130, 246, 0.2)',
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  color: '#60a5fa'
-                }}
-                className="w-full py-2 px-4 rounded-lg transition-all duration-200 hover:opacity-80 text-sm font-medium"
-              >
-                Create New Store
-              </button>
-              <button
-                onClick={() => navigate('/builder')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   color: 'rgba(255, 255, 255, 0.9)'
                 }}
-                className="w-full py-2 px-4 rounded-lg transition-all duration-200 hover:opacity-80 text-sm font-medium"
+                className="w-full text-left p-3 rounded-lg hover:bg-opacity-75 transition-all duration-200"
               >
-                Open Builder
+                <div className="font-medium">Create New Store</div>
+                <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Build a new e-commerce website</div>
               </button>
             </div>
           </div>
 
-          {/* Store Analytics */}
+          {/* My E-commerce Stores */}
+          <div style={{
+            background: 'rgba(15, 15, 35, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)'
+          }} className="rounded-lg p-6">
+            <h3 className="font-medium mb-4 text-white">My E-commerce Stores</h3>
+            <div className="space-y-2">
+              {publishedProjects.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="text-blue-400 text-2xl mb-2 font-bold">S</div>
+                  <p className="text-sm mb-3" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>No stores yet</p>
+                  <button
+                    onClick={() => navigate('/projects')}
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      color: '#60a5fa'
+                    }}
+                    className="text-xs px-3 py-1 rounded-full transition-all duration-200 hover:opacity-80"
+                  >
+                    Create First Store
+                  </button>
+                </div>
+              ) : (
+                publishedProjects.map((project) => (
+                  <div key={project.id} style={{
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'rgba(255, 255, 255, 0.05)'
+                  }} className="rounded-lg p-3 transition-all duration-200 hover:bg-opacity-75">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-lg text-blue-400 font-bold">S</div>
+                        <div>
+                          <div className="font-medium text-sm text-white">{project.name}</div>
+                          <div className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{project.description}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => navigate(`/store/${project.id}`)}
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid rgba(59, 130, 246, 0.4)',
+                            color: '#60a5fa'
+                          }}
+                          className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-80"
+                        >
+                          Manage Store
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-opacity-10 border-white flex items-center justify-between text-xs" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                      <span>Store ID: {project.slug}</span>
+                      <button
+                        onClick={() => viewLiveWebsite(project)}
+                        className="text-green-400 hover:underline"
+                      >
+                        View Live ↗
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
           <div style={{
             background: 'rgba(15, 15, 35, 0.95)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -198,40 +243,30 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Published:</span>
-                <span className="font-medium text-green-400">
-                  {publishedProjects.filter(p => p.isPublished).length}
-                </span>
+                <span className="font-medium text-green-400">{publishedProjects.filter(p => p.isPublished).length}</span>
               </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div style={{
-            background: 'rgba(15, 15, 35, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)'
-          }} className="rounded-lg p-6">
-            <h3 className="text-lg font-medium mb-4 text-white">Recent Activity</h3>
-            <div className="space-y-2">
-              <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                {publishedProjects.length > 0 
-                  ? `Last updated: ${publishedProjects[0]?.name}` 
-                  : 'No recent activity'
-                }
-              </p>
+              <button
+                onClick={() => navigate('/projects')}
+                style={{
+                  background: 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  color: '#60a5fa'
+                }}
+                className="w-full py-2 px-4 rounded-lg transition-all duration-200 hover:opacity-80 text-sm font-medium mt-4"
+              >
+                Create New Store
+              </button>
             </div>
           </div>
         </div>
 
-        {/* E-commerce Stores Section */}
+        {/* Store Performance Section */}
         <div className="mt-8">
           <h3 className="text-xl font-semibold mb-4 text-white">Your E-commerce Stores</h3>
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto"></div>
-              <p className="mt-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Loading your stores...
-              </p>
+              <p className="mt-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Loading your websites...</p>
             </div>
           ) : publishedProjects.length === 0 ? (
             <div style={{
@@ -241,9 +276,7 @@ export default function DashboardPage() {
             }} className="rounded-lg p-8 text-center">
               <div className="text-blue-400 text-4xl mb-4 font-bold">S</div>
               <h4 className="text-lg font-medium text-white mb-2">No E-commerce Stores</h4>
-              <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Create your first online store to start selling products.
-              </p>
+              <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Create your first online store to start selling products.</p>
               <button
                 onClick={() => navigate('/projects')}
                 style={{
@@ -270,9 +303,7 @@ export default function DashboardPage() {
                       <div className="text-2xl text-blue-400 font-bold">S</div>
                       <div>
                         <h4 className="text-lg font-medium text-white">{project.name}</h4>
-                        <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                          Store ID: {project.slug}
-                        </p>
+                        <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Store ID: {project.slug}</p>
                       </div>
                     </div>
                     <span style={{
@@ -285,9 +316,7 @@ export default function DashboardPage() {
                   </div>
                   
                   {project.description && (
-                    <p className="text-sm mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      {project.description}
-                    </p>
+                    <p className="text-sm mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{project.description}</p>
                   )}
                   
                   {/* Store Stats */}
