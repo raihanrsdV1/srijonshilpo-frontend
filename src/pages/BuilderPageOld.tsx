@@ -146,18 +146,156 @@ export default function BuilderPage() {
     if (!project) return
 
     const grapesjs = (window as any).grapesjs
-    const gjsPresetWebpage = (window as any).gjsPresetWebpage
-    const gjsBlocksBasic = (window as any).gjsBlocksBasic
-
     if (!grapesjs) return
+
+    // Clean up any existing editor
+    if (editor) {
+      try {
+        editor.destroy()
+      } catch (e) {
+        console.log('Editor cleanup skipped:', e)
+      }
+    }
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current!,
       height: '100%',
       width: '100%',
       
-      // Canvas configuration for magnetic grid and proper sizing
+      // Simplified canvas configuration to ensure drag-drop works
       canvas: {
+        styles: [`
+          * { box-sizing: border-box; }
+          body { 
+            margin: 0; 
+            padding: 20px; 
+            background: transparent; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          }
+          .gjs-selected { outline: 2px solid #3b82f6 !important; outline-offset: 2px; }
+        `]
+      },
+      
+      // Enable all essential features for drag-drop
+      fromElement: false,
+      allowScripts: false,
+      showOffsets: true,
+      
+      // Storage - disable for now to prevent conflicts
+      storageManager: { type: 'none' },
+      
+      // Essential managers
+      blockManager: {
+        appendTo: '.blocks-container'
+      },
+
+      styleManager: {
+        appendTo: '#inspector-styles',
+        sectors: [
+          {
+            name: 'Dimension',
+            open: true,
+            buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding'],
+          },
+          {
+            name: 'Typography',
+            open: false,
+            buildProps: ['font-family', 'font-size', 'font-weight', 'line-height', 'color', 'text-align'],
+          },
+          {
+            name: 'Decorations',
+            open: false,
+            buildProps: ['background-color', 'border-radius', 'border', 'box-shadow', 'text-shadow'],
+          },
+          {
+            name: 'Extra',
+            open: false,
+            buildProps: ['opacity', 'transition', 'perspective', 'transform'],
+          }
+        ]
+      },
+
+      layerManager: {
+        appendTo: '#inspector-layers'
+      },
+
+      traitManager: {
+        appendTo: '#inspector-traits'
+      },
+
+      deviceManager: {
+        devices: [
+          { id: 'Desktop', name: 'Desktop', width: '' },
+          { id: 'Tablet', name: 'Tablet', width: '768px' },
+          { id: 'Mobile', name: 'Mobile', width: '375px' },
+        ]
+      },
+
+      // Panel configuration for our custom buttons
+      panels: {
+        defaults: [
+          {
+            id: 'basic-actions',
+            el: '.panel__basic-actions',
+            buttons: [
+              {
+                id: 'visibility',
+                active: true,
+                className: 'btn-toggle-borders',
+                label: 'Grid',
+                command: 'sw-visibility',
+              },
+              {
+                id: 'export',
+                className: 'btn-open-export',
+                label: 'Code',
+                command: 'export-template',
+              },
+              {
+                id: 'show-json',
+                className: 'btn-show-json',
+                label: 'JSON',
+                context: 'show-json',
+                command(editor: any) {
+                  editor.Modal.setTitle('Components JSON')
+                    .setContent(`<textarea style="width:100%; height: 250px;">${JSON.stringify(editor.getComponents())}</textarea>`)
+                    .open()
+                },
+              }
+            ]
+          }
+        ]
+      }
+    })
+
+    // Add essential commands
+    grapesEditor.Commands.add('sw-visibility', {
+      run(editor: any, sender: any) {
+        const body = editor.Canvas.getBody()
+        const isActive = sender.get('active')
+        
+        if (isActive) {
+          body.classList.add('grid-enabled')
+        } else {
+          body.classList.remove('grid-enabled')
+        }
+      }
+    })
+
+    // Add CSS for grid in canvas
+    grapesEditor.Canvas.getDocument().head.insertAdjacentHTML('beforeend', `
+      <style>
+        body.grid-enabled {
+          background-image: 
+            linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+      </style>
+    `)
+
+    // Add draggable blocks immediately
+    const bm = grapesEditor.BlockManager
         styles: [
           `
           * { box-sizing: border-box; }
@@ -186,7 +324,7 @@ export default function BuilderPage() {
         scripts: []
       },
       
-      // Essential configuration for blocks to show - use built-in blocks
+      // Essential configuration for blocks to show
       plugins: [gjsPresetWebpage, gjsBlocksBasic],
       
       pluginsOpts: {
@@ -195,10 +333,15 @@ export default function BuilderPage() {
           modalImportLabel: '<div style="margin-bottom: 10px; font-size: 13px;">Paste here your HTML/CSS and click Import</div>',
           modalImportContent: function(editor: any) {
             return editor.getHtml() + '<style>' + editor.getCss() + '</style>'
-          }
+          },
+          // Ensure basic blocks are available
+          blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video', 'map'],
+          // Show the blocks panel by default
+          showBlocksPanel: true,
         },
         [gjsBlocksBasic]: {
-          flexGrid: true
+          blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video', 'map'],
+          flexGrid: true,
         }
       },
       
@@ -213,9 +356,12 @@ export default function BuilderPage() {
         }
       },
       
-      // Block manager configuration - let GrapesJS handle block rendering
+      // Block manager configuration to ensure blocks are visible
       blockManager: {
-        appendTo: '.blocks-container'
+        appendTo: '.blocks-container',
+        blocks: [
+          'column1', 'column2', 'column3', 'text', 'link', 'image', 'video', 'map'
+        ]
       },
 
       // Devices (page view options)
@@ -348,9 +494,6 @@ export default function BuilderPage() {
 
         // Listen for component selection to show Smart Object customizer
         grapesEditor.on('component:selected', (component: any) => {
-          // Always show inspector when a component is selected
-          setShowInspector(true)
-          
           const attrs = component.get('attributes') || {}
           const smartId = attrs['data-smart-object-id'] || attrs['data-smart-object']
           if (smartId) {
@@ -359,9 +502,7 @@ export default function BuilderPage() {
           }
           setSelectedSmartObject(null)
         })
-        
         grapesEditor.on('component:deselected', () => {
-          // Keep inspector open but clear smart object selection
           setSelectedSmartObject(null)
         })
       } catch (error) {
@@ -382,87 +523,85 @@ export default function BuilderPage() {
       setMagneticGrid(magneticGrid)
       magneticGrid.toggleGridVisibility(true) // Ensure grid is visible on load
 
-      // Let GrapesJS handle block rendering automatically - blocks should appear from plugins
+      // Add essential blocks for drag and drop
+      const blockManager = grapesEditor.BlockManager
+      
+      // Clear existing blocks to avoid duplicates
+      blockManager.getAll().forEach((block: any) => {
+        if (!block.id.startsWith('smart-')) {
+          blockManager.remove(block.id)
+        }
+      })
+
+      // Add basic blocks
+      blockManager.add('text', {
+        label: 'Text',
+        category: 'Basic',
+        content: '<div data-gjs-type="text">Insert your text here</div>',
+        media: '<i class="fa fa-font"></i>'
+      })
+
+      blockManager.add('heading', {
+        label: 'Heading',
+        category: 'Basic', 
+        content: '<h1>Heading</h1>',
+        media: '<i class="fa fa-header"></i>'
+      })
+
+      blockManager.add('image', {
+        label: 'Image',
+        category: 'Media',
+        content: '<img src="https://via.placeholder.com/300x200" alt="Image">',
+        media: '<i class="fa fa-image"></i>'
+      })
+
+      blockManager.add('button', {
+        label: 'Button',
+        category: 'Basic',
+        content: '<button type="button" class="btn">Click me</button>',
+        media: '<i class="fa fa-hand-pointer-o"></i>'
+      })
+
+      blockManager.add('link', {
+        label: 'Link',
+        category: 'Basic',
+        content: '<a href="#" data-gjs-type="link">Link</a>',
+        media: '<i class="fa fa-link"></i>'
+      })
+
+      blockManager.add('container', {
+        label: 'Container',
+        category: 'Layout',
+        content: '<div style="padding: 20px; background: #f8f9fa; min-height: 100px;">Container</div>',
+        media: '<i class="fa fa-square-o"></i>'
+      })
+
+      blockManager.add('row', {
+        label: 'Row',
+        category: 'Layout',
+        content: '<div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px;"><div style="flex: 1; padding: 10px; background: #e9ecef;">Column 1</div><div style="flex: 1; padding: 10px; background: #e9ecef;">Column 2</div></div>',
+        media: '<i class="fa fa-columns"></i>'
+      })
+
+      // Force render blocks to ensure they're visible
+      setTimeout(() => {
+        const container = document.querySelector('.blocks-container')
+        if (container && blockManager) {
+          blockManager.render(container)
+        }
+      }, 100)
 
       // Render core managers into custom containers
       const sm = grapesEditor.StyleManager
       const lm = grapesEditor.LayerManager
       const tm = grapesEditor.TraitManager
-      const pm = grapesEditor.Panels
-      const cm = grapesEditor.Commands
       
-      // Add grid toggle command FIRST
-      let gridEnabled = true
-      cm.add('toggle-grid', {
-        run: (editor: any) => {
-          gridEnabled = !gridEnabled
-          if (magneticGrid) {
-            magneticGrid.toggleGridVisibility(gridEnabled)
-          }
-          // Update button state
-          const btn = pm.getButton('options', 'grid-toggle')
-          if (btn) {
-            btn.set('active', gridEnabled)
-          }
-        }
-      })
-      
-      // Render managers with proper timing to ensure DOM elements exist
-      setTimeout(() => {
-        const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
-        const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
-        const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
-        
-        if (styleEl) {
-          sm.render(styleEl)
-          console.log('StyleManager rendered successfully')
-        }
-        if (layerEl) {
-          lm.render(layerEl)
-          console.log('LayerManager rendered successfully')
-        }
-        if (traitEl) {
-          tm.render(traitEl)
-          console.log('TraitManager rendered successfully')
-        }
-
-        // Add grid toggle button to panels - this should make it visible
-        const panel = pm.getPanel('options') || pm.addPanel({
-          id: 'options',
-          el: '.panel__basic-actions'
-        })
-        
-        panel.get('buttons').add({
-          id: 'grid-toggle',
-          className: 'btn-grid-toggle',
-          label: '⊞ Grid',
-          command: 'toggle-grid',
-          context: 'toggle-grid',
-          attributes: { title: 'Toggle Grid Visibility' },
-          active: true
-        })
-
-        console.log('Grid toggle button added to panel')
-
-        // Add undo/redo buttons
-        panel.get('buttons').add({
-          id: 'undo',
-          className: 'btn-undo',
-          label: '↶',
-          command: 'core:undo',
-          attributes: { title: 'Undo (Ctrl+Z)' }
-        })
-
-        panel.get('buttons').add({
-          id: 'redo', 
-          className: 'btn-redo',
-          label: '↷',
-          command: 'core:redo',
-          attributes: { title: 'Redo (Ctrl+Y)' }
-        })
-
-        console.log('Undo/Redo buttons added to panel')
-      }, 300)
+      const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
+      const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
+      const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+      if (styleEl) sm.render(styleEl)
+      if (layerEl) lm.render(layerEl)
+      if (traitEl) tm.render(traitEl)
 
       // Load project data
       try {
@@ -942,48 +1081,39 @@ export default function BuilderPage() {
               />
             </div>
           ) : showInspector ? (
-            <div className="properties-panel photoshop-style">
-              {/* Top Section (60%): Object Properties */}
-              <div className="properties-top-section">
-                <div className="properties-header">
-                  <h3 className="properties-title">Properties</h3>
-                  <button
-                    onClick={() => setShowInspector(false)}
-                    className="properties-close"
-                  >
-                    ✕
-                  </button>
-                </div>
-                
+            <div className="properties-panel">
+              <div className="properties-header">
                 <div className="properties-tabs">
                   <button 
                     onClick={() => setInspectorTab('styles')} 
                     className={`properties-tab ${inspectorTab==='styles'?'properties-tab-active':''}`}
                   >
-                    🎨 Styles
+                    Styles
+                  </button>
+                  <button 
+                    onClick={() => setInspectorTab('layers')} 
+                    className={`properties-tab ${inspectorTab==='layers'?'properties-tab-active':''}`}
+                  >
+                    Layers
                   </button>
                   <button 
                     onClick={() => setInspectorTab('traits')} 
                     className={`properties-tab ${inspectorTab==='traits'?'properties-tab-active':''}`}
                   >
-                    ⚙️ Settings
+                    Traits
                   </button>
                 </div>
-                
-                <div className="properties-content">
-                  <div id="inspector-styles" style={{ display: inspectorTab==='styles' ? 'block' : 'none' }}></div>
-                  <div id="inspector-traits" style={{ display: inspectorTab==='traits' ? 'block' : 'none' }}></div>
-                </div>
+                <button
+                  onClick={() => setShowInspector(false)}
+                  className="properties-close"
+                >
+                  ✕
+                </button>
               </div>
-              
-              {/* Bottom Section (40%): Layer Management */}
-              <div className="properties-bottom-section">
-                <div className="layers-header">
-                  <h3 className="layers-title">🗂️ Layers</h3>
-                </div>
-                <div className="layers-content">
-                  <div id="inspector-layers"></div>
-                </div>
+              <div className="properties-content">
+                <div id="inspector-styles" style={{ display: inspectorTab==='styles' ? 'block' : 'none' }}></div>
+                <div id="inspector-layers" style={{ display: inspectorTab==='layers' ? 'block' : 'none' }}></div>
+                <div id="inspector-traits" style={{ display: inspectorTab==='traits' ? 'block' : 'none' }}></div>
               </div>
             </div>
           ) : (
@@ -992,12 +1122,7 @@ export default function BuilderPage() {
                 <div className="placeholder-content">
                   <div className="placeholder-icon">🎨</div>
                   <h3>Select an Element</h3>
-                  <p>Choose an element to edit its properties and see them in the panels above</p>
-                  <div className="placeholder-hint">
-                    <strong>Layout Structure:</strong><br/>
-                    • Top 60%: Object properties & styling<br/>
-                    • Bottom 40%: Layer management & hierarchy
-                  </div>
+                  <p>Choose an element to edit its properties</p>
                   <button 
                     onClick={() => setShowInspector(true)}
                     className="placeholder-btn"

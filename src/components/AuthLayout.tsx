@@ -5,52 +5,93 @@ export default function AuthLayout() {
   const isLogin = location.pathname.includes('login')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-        <div className="absolute bottom-0 right-20 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-3000"></div>
+    <div className="min-h-screen relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
+      backgroundSize: '300% 300%',
+      animation: 'gradientShift 8s ease infinite'
+    }}>
+      {/* Inject animations */}
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-20px) rotate(1deg); }
+          66% { transform: translateY(10px) rotate(-1deg); }
+        }
+      `}</style>
+
+      {/* Floating Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-20 w-32 h-32 rounded-full opacity-10" style={{
+          background: 'rgba(59, 130, 246, 0.3)',
+          filter: 'blur(40px)',
+          animation: 'float 6s ease-in-out infinite'
+        }}></div>
+        <div className="absolute top-40 right-32 w-24 h-24 rounded-full opacity-10" style={{
+          background: 'rgba(168, 85, 247, 0.3)',
+          filter: 'blur(30px)',
+          animation: 'float 8s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute bottom-32 left-40 w-40 h-40 rounded-full opacity-10" style={{
+          background: 'rgba(34, 197, 94, 0.3)',
+          filter: 'blur(50px)',
+          animation: 'float 7s ease-in-out infinite'
+        }}></div>
       </div>
 
       <div className="relative z-10 min-h-screen grid lg:grid-cols-2">
         {/* Left Side - Brand Section */}
         <div className="hidden lg:flex items-center justify-center p-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-blue-600/20 backdrop-blur-sm"></div>
           <div className="relative z-10 text-center max-w-lg">
             {/* Logo/Icon */}
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl backdrop-blur-md border border-white/30">
-              <span className="text-4xl text-white">🎨</span>
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.2)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              backdropFilter: 'blur(20px)'
+            }} className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
+              <span className="text-4xl text-blue-400 font-bold">S</span>
             </div>
             
             {/* Brand Text */}
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-700 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-5xl font-bold text-white mb-6">
               Srijon Shilpo
             </h1>
-            <p className="text-xl text-gray-700 leading-relaxed mb-8 font-medium">
-              Build stunning websites with our AI-powered visual builder. Transform your ideas into beautiful, professional websites without coding.
+            <p className="text-xl leading-relaxed mb-8 font-medium" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+              Build stunning e-commerce websites with our AI-powered visual builder. Transform your ideas into beautiful, professional online stores.
             </p>
             
             {/* Feature Points */}
             <div className="space-y-4 text-left">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">✓</span>
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.2)',
+                  border: '1px solid rgba(34, 197, 94, 0.4)'
+                }} className="w-8 h-8 rounded-full flex items-center justify-center">
+                  <span className="text-green-400 text-sm font-bold">✓</span>
                 </div>
-                <span className="text-gray-700 font-medium">Drag & Drop Visual Builder</span>
+                <span className="text-white font-medium">Drag & Drop Visual Builder</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">✓</span>
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)'
+                }} className="w-8 h-8 rounded-full flex items-center justify-center">
+                  <span className="text-blue-400 text-sm font-bold">✓</span>
                 </div>
-                <span className="text-gray-700 font-medium">AI-Powered Smart Objects</span>
+                <span className="text-white font-medium">E-commerce Ready Components</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">✓</span>
+                <div style={{
+                  background: 'rgba(168, 85, 247, 0.2)',
+                  border: '1px solid rgba(168, 85, 247, 0.4)'
+                }} className="w-8 h-8 rounded-full flex items-center justify-center">
+                  <span className="text-purple-400 text-sm font-bold">✓</span>
                 </div>
-                <span className="text-gray-700 font-medium">One-Click Publishing</span>
+                <span className="text-white font-medium">One-Click Publishing</span>
               </div>
             </div>
           </div>
@@ -61,22 +102,28 @@ export default function AuthLayout() {
           <div className="w-full max-w-md">
             {/* Header Section */}
             <div className="text-center mb-8">
-              <div className="lg:hidden w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <span className="text-2xl text-white">🎨</span>
+              <div className="lg:hidden w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl" style={{
+                background: 'rgba(59, 130, 246, 0.2)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                backdropFilter: 'blur(20px)'
+              }}>
+                <span className="text-2xl text-blue-400 font-bold">S</span>
               </div>
               
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              <h2 className="text-3xl font-bold text-white mb-2">
                 {isLogin ? 'Welcome Back!' : 'Join Srijon Shilpo'}
               </h2>
-              <p className="text-gray-600 font-medium">
+              <p className="font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 {isLogin ? 'Sign in to continue your creative journey' : 'Start building amazing websites today'}
               </p>
             </div>
 
             {/* Auth Card */}
-            <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-              {/* Card Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5 rounded-3xl"></div>
+            <div style={{
+              background: 'rgba(15, 15, 35, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(20px)'
+            }} className="rounded-3xl p-8 shadow-2xl relative overflow-hidden">
               
               {/* Form Content */}
               <div className="relative z-10">
@@ -87,16 +134,17 @@ export default function AuthLayout() {
             {/* Switch Auth Mode */}
             <div className="text-center mt-6">
               <Link 
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 font-medium transition-colors duration-300 group" 
+                className="inline-flex items-center gap-2 font-medium transition-colors duration-300 group" 
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                 to={isLogin ? '/register' : '/login'}
               >
                 <span>
                   {isLogin ? "Don't have an account?" : 'Already have an account?'}
                 </span>
-                <span className="text-purple-600 font-semibold group-hover:underline">
+                <span className="text-blue-400 font-semibold group-hover:underline">
                   {isLogin ? 'Sign up' : 'Sign in'}
                 </span>
-                <span className="transform group-hover:translate-x-1 transition-transform duration-300">
+                <span className="transform group-hover:translate-x-1 transition-transform duration-300 text-blue-400">
                   →
                 </span>
               </Link>
