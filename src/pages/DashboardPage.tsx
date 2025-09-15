@@ -81,21 +81,50 @@ export default function DashboardPage() {
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
+        
+        .glassmorphism-header {
+          background: rgba(15, 15, 35, 0.85) !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .glassmorphism-card {
+          background: rgba(15, 15, 35, 0.8) !important;
+          backdrop-filter: blur(16px) !important;
+          -webkit-backdrop-filter: blur(16px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        .glassmorphism-subtle {
+          background: rgba(255, 255, 255, 0.05) !important;
+          backdrop-filter: blur(10px) !important;
+          -webkit-backdrop-filter: blur(10px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
       `}</style>
 
       {/* Header */}
-      <header style={{
-        background: 'rgba(15, 15, 35, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-      }} className="relative z-10">
+      <header className="glassmorphism-header relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div style={{
               background: 'rgba(59, 130, 246, 0.2)',
               border: '1px solid rgba(59, 130, 246, 0.4)'
-            }} className="w-12 h-12 rounded-2xl flex items-center justify-center">
-              <span className="text-blue-400 text-xl font-bold">S</span>
+            }} className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden">
+              <img 
+                src="/images/srijon_shilpo.jpeg" 
+                alt="Srijon Shilpo Logo"
+                className="w-full h-full object-cover rounded-2xl"
+                onError={(e) => {
+                  // Fallback to text if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  target.parentElement!.innerHTML = '<span class="text-blue-400 text-xl font-bold">S</span>'
+                }}
+              />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Dashboard</h1>
@@ -134,11 +163,7 @@ export default function DashboardPage() {
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <div style={{
-            background: 'rgba(15, 15, 35, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)'
-          }} className="rounded-lg p-6">
+          <div className="glassmorphism-card rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-2 text-white">
               Welcome{user?.username ? `, ${user.username}` : ''}!
             </h2>
@@ -152,11 +177,7 @@ export default function DashboardPage() {
         {/* Dashboard Overview */}
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           {/* Quick Actions */}
-          <div style={{
-            background: 'rgba(15, 15, 35, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)'
-          }} className="rounded-lg p-6">
+          <div className="glassmorphism-card rounded-2xl p-6">
             <h3 className="text-lg font-medium mb-4 text-white">Quick Actions</h3>
             <div className="space-y-3">
               <button
@@ -185,11 +206,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Store Analytics */}
-          <div style={{
-            background: 'rgba(15, 15, 35, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(20px)'
-          }} className="rounded-lg p-6">
+          <div className="glassmorphism-card rounded-2xl p-6">
             <h3 className="text-lg font-medium mb-4 text-white">Store Analytics</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -234,11 +251,7 @@ export default function DashboardPage() {
               </p>
             </div>
           ) : publishedProjects.length === 0 ? (
-            <div style={{
-              background: 'rgba(15, 15, 35, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)'
-            }} className="rounded-lg p-8 text-center">
+            <div className="glassmorphism-card rounded-2xl p-8 text-center">
               <div className="text-blue-400 text-4xl mb-4 font-bold">S</div>
               <h4 className="text-lg font-medium text-white mb-2">No E-commerce Stores</h4>
               <p className="mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -259,12 +272,9 @@ export default function DashboardPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {publishedProjects.map((project) => (
-                <div key={project.id} style={{
-                  background: 'rgba(15, 15, 35, 0.95)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderLeft: '4px solid #60a5fa',
-                  backdropFilter: 'blur(20px)'
-                }} className="rounded-lg p-6 hover:opacity-90 transition-all duration-200">
+                <div key={project.id} className="glassmorphism-card rounded-2xl p-6 hover:opacity-90 transition-all duration-200" style={{
+                  borderLeft: '4px solid #60a5fa'
+                }}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <div className="text-2xl text-blue-400 font-bold">S</div>

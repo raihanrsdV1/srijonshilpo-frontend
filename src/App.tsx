@@ -17,6 +17,7 @@ function App() {
       </Route>
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
+      <Route path="/builder" element={<BuilderPage />} />
       <Route path="/builder/:projectId" element={<BuilderPage />} />
       <Route path="/store/:storeId" element={<StoreManagementPage />} />
       <Route path="/ecommerce" element={<EcommercePage />} />

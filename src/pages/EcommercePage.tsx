@@ -165,28 +165,56 @@ export default function EcommercePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
+      backgroundSize: '400% 400%',
+      animation: 'gradientShift 20s ease infinite'
+    }}>
+      {/* Inject animations */}
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .glassmorphism-header {
+          background: rgba(15, 15, 35, 0.85) !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .glassmorphism-card {
+          background: rgba(15, 15, 35, 0.8) !important;
+          backdrop-filter: blur(16px) !important;
+          -webkit-backdrop-filter: blur(16px) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+        }
+      `}</style>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="glassmorphism-header relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Srijon Shilpo E-commerce</h1>
-              <div className="ml-4 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              <h1 className="text-xl font-semibold text-white">Srijon Shilpo E-commerce</h1>
+              <div className="ml-4 px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-full text-sm">
                 Website: {websiteId}
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.username}</span>
+              <span className="text-sm text-gray-300">Welcome, {user?.username}</span>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-300 hover:text-white transition-colors"
               >
                 ← Back to Dashboard
               </button>
               <button
                 onClick={logout}
-                className="text-red-600 hover:text-red-900"
+                className="text-red-400 hover:text-red-300 transition-colors"
               >
                 Logout
               </button>
@@ -220,35 +248,35 @@ export default function EcommercePage() {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+            <h2 className="text-2xl font-bold text-white">Dashboard Overview</h2>
             
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-                <p className="text-3xl font-bold text-gray-900">{dashboardStats?.totalProducts || 0}</p>
+              <div className="glassmorphism-card p-6 rounded-2xl">
+                <h3 className="text-sm font-medium text-gray-400">Total Products</h3>
+                <p className="text-3xl font-bold text-white">{dashboardStats?.totalProducts || 0}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500">Categories</h3>
-                <p className="text-3xl font-bold text-gray-900">{dashboardStats?.totalCategories || 0}</p>
+              <div className="glassmorphism-card p-6 rounded-2xl">
+                <h3 className="text-sm font-medium text-gray-400">Categories</h3>
+                <p className="text-3xl font-bold text-white">{dashboardStats?.totalCategories || 0}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500">Active Products</h3>
-                <p className="text-3xl font-bold text-green-600">{dashboardStats?.activeProducts || 0}</p>
+              <div className="glassmorphism-card p-6 rounded-2xl">
+                <h3 className="text-sm font-medium text-gray-400">Active Products</h3>
+                <p className="text-3xl font-bold text-green-400">{dashboardStats?.activeProducts || 0}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500">Low Stock</h3>
-                <p className="text-3xl font-bold text-red-600">{dashboardStats?.lowStockProducts || 0}</p>
+              <div className="glassmorphism-card p-6 rounded-2xl">
+                <h3 className="text-sm font-medium text-gray-400">Low Stock</h3>
+                <p className="text-3xl font-bold text-red-400">{dashboardStats?.lowStockProducts || 0}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500">Total Value</h3>
-                <p className="text-3xl font-bold text-gray-900">৳{dashboardStats?.totalValue || 0}</p>
+              <div className="glassmorphism-card p-6 rounded-2xl">
+                <h3 className="text-sm font-medium text-gray-400">Total Value</h3>
+                <p className="text-3xl font-bold text-white">৳{dashboardStats?.totalValue || 0}</p>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+            <div className="glassmorphism-card p-6 rounded-2xl">
+              <h3 className="text-lg font-medium text-white mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button
                   onClick={() => setShowProductModal(true)}

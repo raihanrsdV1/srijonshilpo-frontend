@@ -52,8 +52,18 @@ export default function AuthLayout() {
               background: 'rgba(59, 130, 246, 0.2)',
               border: '1px solid rgba(59, 130, 246, 0.4)',
               backdropFilter: 'blur(20px)'
-            }} className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
-              <span className="text-4xl text-blue-400 font-bold">S</span>
+            }} className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl overflow-hidden">
+              <img 
+                src="/images/srijon_shilpo.jpeg" 
+                alt="Srijon Shilpo Logo"
+                className="w-full h-full object-cover rounded-3xl"
+                onError={(e) => {
+                  // Fallback to text if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  target.parentElement!.innerHTML = '<span class="text-4xl text-blue-400 font-bold">S</span>'
+                }}
+              />
             </div>
             
             {/* Brand Text */}
