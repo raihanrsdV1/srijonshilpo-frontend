@@ -7,6 +7,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import BuilderPage from './pages/BuilderPage'
 import EcommercePage from './pages/EcommercePage'
 import StoreManagementPage from './pages/StoreManagementPage'
+import SimpleAIBuilder from './pages/SimpleAIBuilder'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/builder" element={<BuilderPage />} />
       <Route path="/builder/:projectId" element={<BuilderPage />} />
+      <Route path="/mock" element={<SimpleAIBuilder />} />
       <Route path="/store/:storeId" element={<StoreManagementPage />} />
       <Route path="/ecommerce" element={<EcommercePage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
