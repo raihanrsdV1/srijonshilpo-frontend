@@ -1,14 +1,15 @@
 import { SmartObjectTemplate, COLOR_SCHEMES, LAYOUT_VARIANTS, SIZE_VARIANTS, ANIMATION_OPTIONS } from '../types/smartObjects'
+import { ICON_CATEGORIES, renderIcon } from '../components/IconSystem'
 
 // Smart Product Showcase Object (Enhanced)
 export const SMART_PRODUCT_SHOWCASE: SmartObjectTemplate = {
   id: 'smart-product-showcase',
-  name: 'Smart Product Showcase',
+  name: 'Product Showcase',
   description: 'Enhanced product display with gallery, zoom, and 360° view capabilities',
   category: 'ecommerce',
   difficulty: 'intermediate',
-  thumbnail: '/smart-objects/product-showcase-thumb.png',
-  preview: '/smart-objects/product-showcase-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productShowcase, { size: 40, color: '#8b5cf6' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productShowcase, { size: 60, color: '#8b5cf6' }),
   
   component: {
     type: 'smart-product-showcase',
@@ -228,12 +229,12 @@ export const SMART_PRODUCT_SHOWCASE: SmartObjectTemplate = {
 // Original Smart Product Card Object
 export const SMART_PRODUCT_CARD: SmartObjectTemplate = {
   id: 'smart-product-card',
-  name: 'Smart Product Card',
+  name: 'Product Card',
   description: 'Professional product card with image, title, price, and buy button',
   category: 'ecommerce',
   difficulty: 'beginner',
-  thumbnail: '/smart-objects/product-card-thumb.png',
-  preview: '/smart-objects/product-card-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productCard, { size: 40, color: '#8b5cf6' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productCard, { size: 60, color: '#8b5cf6' }),
   
   component: {
     type: 'smart-product-card',
@@ -458,12 +459,12 @@ export const SMART_PRODUCT_CARD: SmartObjectTemplate = {
 // Smart Product Grid Object
 export const SMART_PRODUCT_GRID: SmartObjectTemplate = {
   id: 'smart-product-grid',
-  name: 'Smart Product Grid',
+  name: 'Product Grid',
   description: 'Responsive grid layout showing multiple products',
   category: 'ecommerce',
   difficulty: 'intermediate',
-  thumbnail: '/smart-objects/product-grid-thumb.png',
-  preview: '/smart-objects/product-grid-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productGrid, { size: 40, color: '#8b5cf6' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.productGrid, { size: 60, color: '#8b5cf6' }),
   
   component: {
     type: 'smart-product-grid',
@@ -630,12 +631,12 @@ export const SMART_PRODUCT_GRID: SmartObjectTemplate = {
 // Hero Section Smart Object
 export const SMART_HERO_SECTION: SmartObjectTemplate = {
   id: 'smart-hero-section',
-  name: 'Smart Hero Section',
+  name: 'Hero Section',
   description: 'Eye-catching hero section with title, subtitle, and call-to-action',
   category: 'content',
   difficulty: 'beginner',
-  thumbnail: '/smart-objects/hero-section-thumb.png',
-  preview: '/smart-objects/hero-section-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.heroSection, { size: 40, color: '#ec4899' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.heroSection, { size: 60, color: '#ec4899' }),
   
   component: {
     type: 'smart-hero-section',
@@ -855,12 +856,12 @@ export const SMART_HERO_SECTION: SmartObjectTemplate = {
 // Smart CTA Banner
 export const SMART_CTA_BANNER: SmartObjectTemplate = {
   id: 'smart-cta-banner',
-  name: 'Smart CTA Banner',
+  name: 'CTA Banner',
   description: 'Full-width banner with text and call-to-action',
   category: 'content',
   difficulty: 'beginner',
-  thumbnail: '/smart-objects/cta-banner-thumb.png',
-  preview: '/smart-objects/cta-banner-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.ctaBanner, { size: 40, color: '#ec4899' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.ctaBanner, { size: 60, color: '#ec4899' }),
   component: {
     type: 'smart-cta-banner',
     defaults: {
@@ -1013,12 +1014,12 @@ export const SMART_CTA_BANNER: SmartObjectTemplate = {
 // Smart Testimonial Carousel
 export const SMART_TESTIMONIAL_CAROUSEL: SmartObjectTemplate = {
   id: 'smart-testimonial-carousel',
-  name: 'Smart Testimonial Carousel',
+  name: 'Testimonials',
   description: 'Customer testimonials carousel with photos, ratings, and smooth transitions',
   category: 'content',
   difficulty: 'intermediate',
-  thumbnail: '/smart-objects/testimonial-carousel-thumb.png',
-  preview: '/smart-objects/testimonial-carousel-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.testimonialCarousel, { size: 40, color: '#ec4899' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.testimonialCarousel, { size: 60, color: '#ec4899' }),
   
   component: {
     type: 'smart-testimonial-carousel',
@@ -1190,12 +1191,12 @@ export const SMART_TESTIMONIAL_CAROUSEL: SmartObjectTemplate = {
 // Smart FAQ Accordion
 export const SMART_FAQ_ACCORDION: SmartObjectTemplate = {
   id: 'smart-faq-accordion',
-  name: 'Smart FAQ Accordion',
+  name: 'FAQ Accordion',
   description: 'Expandable FAQ section with search functionality and smooth animations',
   category: 'content',
   difficulty: 'beginner',
-  thumbnail: '/smart-objects/faq-accordion-thumb.png',
-  preview: '/smart-objects/faq-accordion-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.faqAccordion, { size: 40, color: '#ec4899' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.faqAccordion, { size: 60, color: '#ec4899' }),
   
   component: {
     type: 'smart-faq-accordion',
@@ -1360,12 +1361,12 @@ export const SMART_FAQ_ACCORDION: SmartObjectTemplate = {
 // Smart Shopping Cart
 export const SMART_SHOPPING_CART: SmartObjectTemplate = {
   id: 'smart-shopping-cart',
-  name: 'Smart Shopping Cart',
+  name: 'Shopping Cart',
   description: 'Advanced shopping cart with slide-out drawer, quantity controls, and discounts',
   category: 'ecommerce',
   difficulty: 'advanced',
-  thumbnail: '/smart-objects/shopping-cart-thumb.png',
-  preview: '/smart-objects/shopping-cart-preview.png',
+  thumbnail: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.shoppingCart, { size: 40, color: '#8b5cf6' }),
+  preview: renderIcon(ICON_CATEGORIES.SMART_OBJECTS.shoppingCart, { size: 60, color: '#8b5cf6' }),
   
   component: {
     type: 'smart-shopping-cart',

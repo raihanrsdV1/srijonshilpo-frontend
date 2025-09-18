@@ -125,18 +125,79 @@ export class MagneticGrid {
    * Toggle grid visibility
    */
   public toggleGridVisibility(enabled: boolean) {
+    this.config.enabled = enabled
     const canvas = this.editor.Canvas.getFrameEl()
     if (!canvas) return
     
-    const canvasBody = canvas?.contentDocument?.body || canvas?.querySelector('body')
+    const canvasDoc = canvas.contentDocument || canvas.contentWindow?.document
+    const canvasBody = canvasDoc?.body
     if (!canvasBody) return
     
     if (enabled) {
+      // Inject grid CSS if not already present
+      this.injectGridCSS(canvasDoc)
+      
       canvasBody.classList.add('grid-enabled')
       canvasBody.style.setProperty('--grid-size', `${this.config.size}px`)
     } else {
       canvasBody.classList.remove('grid-enabled')
     }
+  }
+
+  /**
+   * Inject grid CSS into canvas iframe
+   */
+  private injectGridCSS(canvasDoc: Document) {
+    if (!canvasDoc) return
+    
+    // Check if grid CSS is already injected
+    if (canvasDoc.getElementById('magnetic-grid-css')) return
+    
+    const gridCSS = `
+      .grid-enabled {
+        background-image: 
+          linear-gradient(to right, rgba(79, 70, 229, 0.1) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(79, 70, 229, 0.1) 1px, transparent 1px);
+        background-size: var(--grid-size, 16px) var(--grid-size, 16px);
+        background-position: 0 0;
+        min-height: 100vh;
+      }
+      
+      .grid-enabled:hover {
+        background-image: 
+          linear-gradient(to right, rgba(79, 70, 229, 0.2) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(79, 70, 229, 0.2) 1px, transparent 1px);
+      }
+    `
+    
+    const styleElement = canvasDoc.createElement('style')
+    styleElement.id = 'magnetic-grid-css'
+    styleElement.textContent = gridCSS
+    canvasDoc.head.appendChild(styleElement)
+  }
+
+  /**
+   * Check if grid is currently visible
+   */
+  public isGridVisible(): boolean {
+    return this.config.enabled
+  }
+
+  /**
+   * Update grid size
+   */
+  public setGridSize(size: number) {
+    this.config.size = size
+    if (this.config.enabled) {
+      this.toggleGridVisibility(true) // Re-apply with new size
+    }
+  }
+
+  /**
+   * Get current grid size
+   */
+  public getGridSize(): number {
+    return this.config.size
   }
 
   /**

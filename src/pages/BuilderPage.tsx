@@ -4,12 +4,37 @@ import { builderService } from '../services/api'
 import SmartObjectsManager from '../components/SmartObjectsManager'
 import SmartObjectCustomizer from '../components/SmartObjectCustomizer'
 import AssetManager from '../components/AssetManager'
-import ResizeManager from '../utils/ResizeManager'
+import UniversalHoverOutline from '../components/UniversalHoverOutline'
+import { ReactSettingsPanel } from '../components/ReactSettingsPanel'
+import ReactStylesPanel from '../components/ReactStylesPanel'
+import { ICON_CATEGORIES, renderIcon } from '../components/IconSystem'
 import MagneticGrid from '../utils/MagneticGrid'
 import '../utils/TestSuite'
 import '../styles/builder.css'
 import '../styles/smartObjects.css'
 import '../components/SmartObjectCustomizer.css'
+
+// Debug mode flag - set to true for comprehensive logging
+const DEBUG_MODE = true
+
+// Debug logger utilities - simplified without in-app console
+const debugLog = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.log('🔍 [DEBUG]', ...args)
+  }
+}
+
+const debugWarn = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.warn('⚠️ [DEBUG]', ...args)
+  }
+}
+
+const debugError = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.error('❌ [DEBUG]', ...args)
+  }
+}
 
 interface Project {
   id: number
@@ -34,19 +59,121 @@ export default function BuilderPage() {
   const [saving, setSaving] = useState(false)
   const [grapesLoaded, setGrapesLoaded] = useState(false)
   const [smartObjectsManager, setSmartObjectsManager] = useState<SmartObjectsManager | null>(null)
-  const [resizeManager, setResizeManager] = useState<ResizeManager | null>(null)
   const [magneticGrid, setMagneticGrid] = useState<MagneticGrid | null>(null)
+  const [hoverOutline, setHoverOutline] = useState<UniversalHoverOutline | null>(null)
+  // Debounce/guard for selection handling to prevent repeated heavy work/freezes
+  const lastSelectedIdRef = useRef<string | null>(null)
+  const [gridSize, setGridSize] = useState<number>(20)
+  const [showGridSizeMenu, setShowGridSizeMenu] = useState<boolean>(false)
   const [selectedSmartObject, setSelectedSmartObject] = useState<any>(null)
+  const [selectedComponent, setSelectedComponent] = useState<any>(null)
+  const [componentType, setComponentType] = useState<string>('')
   const [smartObjectsMode, setSmartObjectsMode] = useState(false)
   const [blockSearch, setBlockSearch] = useState('')
   const [showSmartOnly, setShowSmartOnly] = useState(false)
+  const [viewMode, setViewMode] = useState<'icon' | 'compact'>('icon') // Default to icon-only view
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(320)
   const [activeDevice, setActiveDevice] = useState<'Desktop' | 'Tablet' | 'Mobile'>('Desktop')
   const [zoom, setZoom] = useState<number>(100)
-  const [showInspector, setShowInspector] = useState<boolean>(false)
-  const [inspectorTab, setInspectorTab] = useState<'styles' | 'layers' | 'traits'>('styles')
+  const [showInspector, setShowInspector] = useState<boolean>(true)
+  const [inspectorTab, setInspectorTab] = useState<'styles' | 'layers' | 'traits'>('traits')
   const [showAssetManager, setShowAssetManager] = useState<boolean>(false)
   const [assetSelectionCallback, setAssetSelectionCallback] = useState<((url: string) => void) | null>(null)
+  
+  // New toggles for object highlighting and grid
+  const [showObjectHighlights, setShowObjectHighlights] = useState<boolean>(true)
+  const [gridViewEnabled, setGridViewEnabled] = useState<boolean>(false)
+  
+  // Guard against infinite update loops
+  const componentUpdateLock = useRef<Set<string>>(new Set())
+
+  // Helper function to determine component type
+  const getComponentType = (component: any): string => {
+    if (!component) {
+      debugError('getComponentType: No component provided')
+      return 'unknown'
+    }
+    
+    try {
+      debugLog('getComponentType: Analyzing component:', component)
+      
+      const type = component.get('type') || ''
+      const tagName = component.get('tagName') || ''
+      
+      // Safely get classes - handle different GrapeJS API versions
+      let classes: string[] = []
+      try {
+        const classesObj = component.get('classes')
+        if (classesObj && typeof classesObj.getNames === 'function') {
+          classes = classesObj.getNames() || []
+        } else if (Array.isArray(classesObj)) {
+          classes = classesObj
+        } else if (typeof classesObj === 'string') {
+          classes = classesObj.split(' ').filter(Boolean)
+        }
+      } catch (classError) {
+        debugWarn('getComponentType: Error getting classes:', classError)
+        classes = []
+      }
+      
+      const attrs = component.get('attributes') || {}
+      
+      debugLog('getComponentType: type:', type, 'tagName:', tagName, 'classes:', classes, 'attrs:', attrs)
+      
+      // Check for smart objects first
+      if (attrs['data-smart-object-id'] || attrs['data-smart-object']) {
+        debugLog('getComponentType: Detected smart-object')
+        return 'smart-object'
+      }
+      
+      // Text components
+      if (type === 'text' || tagName === 'span' || tagName === 'p' || 
+          tagName === 'h1' || tagName === 'h2' || tagName === 'h3' || 
+          tagName === 'h4' || tagName === 'h5' || tagName === 'h6') {
+        debugLog('getComponentType: Detected text component')
+        return 'text'
+      }
+    
+      // Button components
+      if (type === 'button' || tagName === 'button' || 
+          classes.includes('btn') || classes.includes('button')) {
+        debugLog('getComponentType: Detected button component')
+        return 'button'
+      }
+      
+      // Image components
+      if (type === 'image' || tagName === 'img') {
+        debugLog('getComponentType: Detected image component')
+        return 'image'
+      }
+      
+      // Link components
+      if (type === 'link' || tagName === 'a') {
+        debugLog('getComponentType: Detected link component')
+        return 'link'
+      }
+      
+      // Container/div components
+      if (type === 'default' || tagName === 'div' || tagName === 'section' || 
+          tagName === 'article' || tagName === 'header' || tagName === 'footer') {
+        debugLog('getComponentType: Detected container component')
+        return 'container'
+      }
+      
+      // Grid/layout components
+      if (classes.includes('grid') || classes.includes('flex') || 
+          classes.includes('row') || classes.includes('col')) {
+        debugLog('getComponentType: Detected grid component')
+        return 'grid'
+      }
+      
+      debugLog('getComponentType: Detected as type:', type || 'unknown')
+      return type || 'unknown'
+    } catch (error) {
+      debugError('getComponentType: Fatal error analyzing component:', error)
+      return 'unknown'
+    }
+  }
 
   useEffect(() => {
     if (!projectId) {
@@ -63,6 +190,25 @@ export default function BuilderPage() {
       initializeEditor()
     }
   }, [project, editor, grapesLoaded])
+
+  // Initialize object highlights when editor is ready
+  useEffect(() => {
+    if (editor && showObjectHighlights) {
+      document.body.classList.add('object-highlights-enabled')
+    } else {
+      document.body.classList.remove('object-highlights-enabled')
+    }
+  }, [editor, showObjectHighlights])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (editor) {
+        editor.destroy()
+      }
+      document.body.classList.remove('object-highlights-enabled')
+    }
+  }, [])
 
   // Live filter for blocks (search + smart-only)
   useEffect(() => {
@@ -108,6 +254,30 @@ export default function BuilderPage() {
       editor.off('change:device', onDevice)
     }
   }, [editor])
+
+  // Click outside handler for grid size menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.grid-size-dropdown')) {
+        setShowGridSizeMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Apply view mode to blocks container
+  useEffect(() => {
+    const blocksContainer = document.querySelector('.blocks-container')
+    if (blocksContainer) {
+      // Remove existing view mode classes
+      blocksContainer.classList.remove('view-mode-icon', 'view-mode-compact')
+      // Add current view mode class
+      blocksContainer.classList.add(`view-mode-${viewMode}`)
+    }
+  }, [viewMode])
 
   const loadGrapeJS = async () => {
     try {
@@ -301,14 +471,75 @@ export default function BuilderPage() {
     createEndDropZone()
   }
 
-  const initializeEditor = () => {
+  const initializeEditor = (retryCount = 0) => {
     if (!project) return
+    
+    const maxRetries = 20 // Maximum retry attempts
+
+    debugLog('initializeEditor: Starting initialization', `(attempt ${retryCount + 1}/${maxRetries})`)
+    
+    // Clean up existing blocks container content to prevent duplication
+    if (retryCount === 0) {
+      // Destroy any existing GrapesJS instance first
+      if (editorRef.current && (window as any).grapesEditorInstance) {
+        try {
+          (window as any).grapesEditorInstance.destroy()
+          delete (window as any).grapesEditorInstance
+          debugLog('initializeEditor: Destroyed existing GrapesJS instance')
+        } catch (e) {
+          debugWarn('initializeEditor: Error destroying existing instance:', e)
+        }
+      }
+      
+      const blocksContainer = document.querySelector('.blocks-container')
+      if (blocksContainer) {
+        // More thorough cleanup - remove all children
+        while (blocksContainer.firstChild) {
+          blocksContainer.removeChild(blocksContainer.firstChild)
+        }
+        debugLog('initializeEditor: Cleaned existing blocks container')
+      }
+    }
+    
+    // Check if required containers exist (only for containers we actually use)
+    const requiredContainers = [
+      { id: '#inspector-layers', name: 'LayerManager' },
+      { id: '.blocks-container', name: 'BlockManager' }
+    ]
+    
+    const missingContainers = requiredContainers.filter(container => {
+      const element = document.querySelector(container.id)
+      if (!element) {
+        debugWarn(`initializeEditor: Missing container ${container.id} for ${container.name}`)
+        return true
+      }
+      debugLog(`initializeEditor: Found container ${container.id} for ${container.name}`)
+      return false
+    })
+    
+    if (missingContainers.length > 0) {
+      if (retryCount < maxRetries) {
+        debugError('initializeEditor: Missing containers, retrying in 100ms:', missingContainers.map(c => c.name), `(attempt ${retryCount + 1}/${maxRetries})`)
+        setTimeout(() => initializeEditor(retryCount + 1), 100)
+        return
+      } else {
+        debugError('initializeEditor: Max retries reached, proceeding without missing containers:', missingContainers.map(c => c.name))
+        // Continue initialization even with missing containers
+      }
+    }
+    
+    debugLog('initializeEditor: All containers found, proceeding with initialization')
 
     const grapesjs = (window as any).grapesjs
     const gjsPresetWebpage = (window as any).gjsPresetWebpage
     const gjsBlocksBasic = (window as any).gjsBlocksBasic
 
-    if (!grapesjs) return
+    if (!grapesjs) {
+      debugError('initializeEditor: GrapesJS not available')
+      return
+    }
+
+    debugLog('initializeEditor: Creating GrapesJS instance')
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current!,
@@ -324,22 +555,27 @@ export default function BuilderPage() {
             margin: 0; 
             padding: 20px; 
             background: transparent; 
-            overflow: auto; 
+            overflow: hidden !important; 
             min-height: 100vh; 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
           body.grid-enabled {
             --grid-size: 20px;
             background-image: 
-              linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+              linear-gradient(to right, rgba(99, 102, 241, 0.2) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(99, 102, 241, 0.2) 1px, transparent 1px);
             background-size: var(--grid-size) var(--grid-size);
             background-position: 0 0;
           }
-          .snap-guideline.horizontal { height: 1px; left: 0; right: 0; background: rgba(59, 130, 246, 0.8) !important; }
-          .snap-guideline.vertical { width: 1px; top: 0; bottom: 0; background: rgba(59, 130, 246, 0.8) !important; }
-          .snap-guideline.center { background: rgba(34, 197, 94, 0.8) !important; }
-          .gjs-selected { outline: 2px solid #3b82f6 !important; outline-offset: 2px; }
+          .snap-guideline.horizontal { height: 2px; left: 0; right: 0; background: rgba(59, 130, 246, 0.9) !important; box-shadow: 0 0 4px rgba(59, 130, 246, 0.4); }
+          .snap-guideline.vertical { width: 2px; top: 0; bottom: 0; background: rgba(59, 130, 246, 0.9) !important; box-shadow: 0 0 4px rgba(59, 130, 246, 0.4); }
+          .snap-guideline.center { background: rgba(34, 197, 94, 0.9) !important; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+          .gjs-selected { outline: 3px dotted #3b82f6 !important; outline-offset: 3px; box-shadow: 0 0 12px rgba(59, 130, 246, 0.4) !important; }
+          .gjs-dashed { border: 3px dashed #3b82f6 !important; opacity: 0.9 !important; }
+          .gjs-highlighter { background: rgba(59, 130, 246, 0.15) !important; border: 2px dashed #3b82f6 !important; }
+          .gjs-cv-canvas { overflow: hidden !important; }
+          .gjs-frame-wrapper { overflow: hidden !important; }
+          .gjs-frame { border: none !important; }
           `
         ],
         scripts: []
@@ -386,8 +622,9 @@ export default function BuilderPage() {
         ],
       },
 
-      // Style Manager for in-depth element control
+      // Style Manager for in-depth element control - disabled since using React components
       styleManager: {
+        // appendTo: '#inspector-styles', // Disabled - using ReactStylesPanel instead
         sectors: [
           {
             name: 'Layout',
@@ -444,6 +681,11 @@ export default function BuilderPage() {
           },
         ]
       },
+      
+      // Trait Manager - DISABLED (using React panel instead)
+      // traitManager: {
+      //   appendTo: '#inspector-traits'
+      // },
 
       // Panel configuration
       panels: {
@@ -457,25 +699,61 @@ export default function BuilderPage() {
         ]
       },
 
-      // Drag and Drop configuration - ensure it works properly
+      // Drag and Drop configuration - Fixed for cross-browser compatibility
       dragDrop: {
-        // Allow dragging from blocks panel
+        // Core drag-drop settings
         allowDrop: true,
+        
+        // Visual feedback during drag
         showOffsets: true,
+        showGuides: true,
         guidesColor: '#3b82f6',
-        guidesOpacity: 0.8,
-        // Enable drag feedback
+        guidesOpacity: 0.9,
+        guidesStroke: 2,
+        
+        // Drop zone appearance
         showDropZone: true,
-        dropzoneColor: 'rgba(59, 130, 246, 0.1)',
+        dropzoneColor: 'rgba(59, 130, 246, 0.15)',
         borderColor: '#3b82f6',
-        borderWidth: '2px'
+        borderWidth: '3px',
+        
+        // Enhanced compatibility settings
+        allowedTargets: '*',
+        preventDragOver: false,  // Allow drag over
+        showHover: true,         // Show hover indicators
+        
+        // Fixes for common drag-drop issues
+        dragDelay: 0,           // No delay for responsiveness
+        dragOffset: 5,          // Minimum pixels to start drag
+        useHover: true          // Enable hover detection
       },
 
-      // Enhanced drop zone configuration
+      // Enhanced DOM Components configuration for better drag support and resizing
       domComponents: {
         draggableComponents: '*',
         storeWrapper: 1,
-        storageType: 'local'
+        storageType: 'local',
+        
+        // Better component handling
+        avoidInlineStyle: false,
+        allowEditableContent: true,
+        
+        // Drag and drop settings
+        dragMode: 'default',    // Use default drag mode (not absolute)
+        resetId: false,
+        
+        // Default component properties - make most components resizable
+        componentDefaults: {
+          resizable: true,       // Enable GrapesJS built-in resizer
+          draggable: true,
+          selectable: true,
+          hoverable: true,
+          // Default minimum dimensions
+          style: {
+            minWidth: '20px',
+            minHeight: '20px'
+          }
+        }
       },
 
       // Enable all interactions
@@ -484,8 +762,18 @@ export default function BuilderPage() {
       undoManager: true
     })
 
+    // Store the instance globally for proper cleanup
+    ;(window as any).grapesEditorInstance = grapesEditor
+
     // Initialize managers and load project data AFTER the editor is fully loaded
     grapesEditor.on('load', () => {
+      // Verify managers initialization (React panel replaces TraitManager)
+      debugLog('Managers available after load:', {
+        'StyleManager': !!grapesEditor.StyleManager,
+        'LayerManager': !!grapesEditor.LayerManager,
+        'ReactSettingsPanel': 'Will be used for traits'
+      })
+      
       // Ensure default device
       try { grapesEditor.setDevice('Desktop') } catch {}
 
@@ -507,72 +795,173 @@ export default function BuilderPage() {
       } catch (e) {
         console.warn('Wrapper style setup skipped:', e)
       }
-      // Initialize Smart Objects types and blocks
+      // Initialize Smart Objects types and blocks - ONLY ONCE
       try {
-        const smartManager = new SmartObjectsManager(grapesEditor)
-        setSmartObjectsManager(smartManager)
+        if (!smartObjectsManager) {
+          console.log('Creating SmartObjectsManager for the first time')
+          const smartManager = new SmartObjectsManager(grapesEditor)
+          setSmartObjectsManager(smartManager)
+        } else {
+          console.log('SmartObjectsManager already exists, skipping re-creation')
+        }
 
-        // Listen for component selection to show Smart Object customizer
+        // Listen for component selection with comprehensive trait configuration
         grapesEditor.on('component:selected', (component: any) => {
-          // Always show inspector when a component is selected
-          setShowInspector(true)
+          debugLog('=== COMPONENT SELECTION EVENT ===')
+          debugLog('component:selected - Raw component:', component)
+
+          // Skip repeated heavy work if the same component is reselected
+          try {
+            const compId = (typeof component.getId === 'function' && component.getId()) || (component as any).ccid || ''
+            if (lastSelectedIdRef.current === compId) {
+              const tm = grapesEditor.TraitManager
+              if (tm && typeof tm.select === 'function') tm.select(component)
+              return
+            }
+            lastSelectedIdRef.current = compId
+          } catch {}
           
-          // Re-render managers when inspector becomes visible
-          setTimeout(() => {
+          // Track selected component and determine its type
+          setSelectedComponent(component)
+          const detectedType = getComponentType(component)
+          debugLog('component:selected - Detected type:', detectedType)
+          setComponentType(detectedType)
+          setShowInspector(true)
+
+          // AUTO-SWITCH TO SETTINGS TAB when component is selected
+          debugLog('component:selected - Switching to traits tab')
+          setInspectorTab('traits')
+
+          // Get element properties for display
+          const type = component.get('type') || 'div'
+          const attrs = component.get('attributes') || {}
+          const smartObjectId = attrs['data-smart-object-id'] || attrs['data-smart-object']
+          const componentId = component.getId() || component.ccid || 'No ID'
+          const tagName = component.get('tagName') || type
+          
+          debugLog('component:selected - Component details:', { type, smartObjectId, componentId, tagName })
+          
+          // Update element info display
+          const elementInfo = document.querySelector('.element-info')
+          if (elementInfo) {
+            debugLog('component:selected - Updating element info display')
+            const titleElement = elementInfo.querySelector('.element-title')
+            const typeElement = elementInfo.querySelector('.element-type')
+            const idElement = elementInfo.querySelector('.element-id')
+            
+            if (titleElement) {
+              if (smartObjectId) {
+                titleElement.textContent = `Smart Object: ${smartObjectId.replace('smart-', '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}`
+              } else {
+                titleElement.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Element`
+              }
+            }
+            
+            if (typeElement) {
+              typeElement.textContent = smartObjectId || tagName || type
+            }
+            
+            if (idElement) {
+              idElement.textContent = componentId
+            }
+          } else {
+            debugWarn('component:selected - Element info display not found')
+          }
+
+          debugLog('component:selected - Loading trait configurations...')
+          // Import and apply comprehensive trait configurations
+          import('../utils/TraitConfigurations').then(({ getTraitConfig }) => {
+            debugLog('component:selected - TraitConfigurations loaded successfully')
+            
+            // Get comprehensive trait configuration using detectedType for better mapping
+            const traitConfig = getTraitConfig(detectedType || type, smartObjectId)
+            
+            debugLog('component:selected - Applying comprehensive trait configuration:', traitConfig)
+            
+            // Ensure StyleManager and TraitManager are ready
             const sm = grapesEditor.StyleManager
-            const lm = grapesEditor.LayerManager
             const tm = grapesEditor.TraitManager
             
-            const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
-            const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
-            const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+            debugLog('component:selected - Manager availability:', { 
+              styleManager: !!sm, 
+              traitManager: !!tm,
+              smSelect: !!(sm && typeof sm.select === 'function'),
+              tmSelect: !!(tm && typeof tm.select === 'function')
+            })
             
-            if (styleEl && sm) {
-              try {
-                styleEl.innerHTML = ''
-                sm.render(styleEl)
-              } catch (e) {
-                console.warn('StyleManager re-render failed:', e)
+            // Set traits on component using GrapeJS's trait system - CORRECT APPROACH
+            debugLog('component:selected - Setting comprehensive traits:', traitConfig)
+            
+            // Apply traits the PROPER GrapesJS way
+            component.set('traits', traitConfig)
+            
+            // Verify that traits were actually set
+            setTimeout(() => {
+              const verifyTraits = component.get('traits')
+              debugLog('Traits verification after set:', {
+                'original config length': traitConfig.length,
+                'component traits length': verifyTraits ? verifyTraits.length : 'N/A',
+                'traits are same': verifyTraits === component.get('traits'),
+                'component has traits collection': !!verifyTraits
+              })
+              
+              if (verifyTraits) {
+                debugLog('First few traits from component:', verifyTraits.slice(0, 3).map((t: any) => ({
+                  name: t.name || t.get?.('name'),
+                  type: t.type || t.get?.('type'),
+                  label: t.label || t.get?.('label')
+                })))
               }
+            }, 50)
+            
+            // Update managers using the correct API
+            if (sm && typeof sm.select === 'function') {
+              debugLog('component:selected - Selecting component in StyleManager')
+              sm.select(component)
             }
-            if (layerEl && lm) {
-              try {
-                layerEl.innerHTML = ''
-                lm.render(layerEl)
-              } catch (e) {
-                console.warn('LayerManager re-render failed:', e)
+            
+            // Update our React Settings Panel state
+            debugLog('component:selected - Updating React Settings Panel with component')
+            setSelectedComponent(component)
+            
+            debugLog('component:selected - Trait configuration applied successfully')
+            console.log('Applied comprehensive trait configuration:', traitConfig.length, 'traits')
+          }).catch(error => {
+            console.error('Failed to load trait configurations:', error)
+            
+            // Fallback to basic traits
+            const basicTraits = [
+              { type: 'text', name: 'id', label: 'Element ID' },
+              { type: 'text', name: 'class', label: 'CSS Classes' },
+              { type: 'text', name: 'title', label: 'Title Attribute' }
+            ]
+            
+            // Apply fallback traits the CORRECT way
+            component.set('traits', basicTraits)
+            try {
+              const tmLocal = grapesEditor.TraitManager
+              if (tmLocal && typeof tmLocal.select === 'function') {
+                tmLocal.select(component)
+                console.log('Applied fallback traits')
               }
-            }
-            if (traitEl && tm) {
-              try {
-                traitEl.innerHTML = ''
-                tm.render(traitEl)
-              } catch (e) {
-                console.warn('TraitManager re-render failed:', e)
-              }
-            }
-          }, 100)
-          
-          const attrs = component.get('attributes') || {}
-          const smartId = attrs['data-smart-object-id'] || attrs['data-smart-object']
-          if (smartId) {
-            const template = smartManager.getTemplate(smartId)
-            if (template) return setSelectedSmartObject({ component, template })
-          }
-          setSelectedSmartObject(null)
+            } catch {}
+          })
+
+          // Don't set selectedSmartObject - integrate everything into inspector traits instead
+          debugLog('component:selected - Smart object detection completed, traits configured')
         })
         
         grapesEditor.on('component:deselected', () => {
-          // Keep inspector open but clear smart object selection
-          setSelectedSmartObject(null)
+          // Keep inspector open for next selection
+          debugLog('component:deselected - Component deselected')
         })
       } catch (error) {
         console.error('Failed to initialize Smart Objects Manager:', error)
       }
 
-      // Initialize ResizeManager for component resizing
-      const resizeManager = new ResizeManager(grapesEditor)
-      setResizeManager(resizeManager)
+      // Initialize Universal Hover Outline system
+      const hoverOutlineSystem = new UniversalHoverOutline(grapesEditor)
+      setHoverOutline(hoverOutlineSystem)
 
       // Initialize MagneticGrid for grid-based layout
       const magneticGrid = new MagneticGrid(grapesEditor, {
@@ -583,6 +972,35 @@ export default function BuilderPage() {
       })
       setMagneticGrid(magneticGrid)
       magneticGrid.toggleGridVisibility(true) // Ensure grid is visible on load
+
+      // Make default component types resizable using GrapesJS built-in resizer
+      const domComponents = grapesEditor.DomComponents
+
+      // Update existing basic component types to be resizable
+      const componentTypes = ['default', 'image', 'text', 'video', 'link', 'map']
+      
+      componentTypes.forEach(type => {
+        try {
+          const existingType = domComponents.getType(type)
+          if (existingType) {
+            // Extend existing type to add resizable property
+            domComponents.addType(type, {
+              model: {
+                defaults: {
+                  ...existingType.model?.defaults,
+                  resizable: true,
+                  draggable: true,
+                  selectable: true,
+                  hoverable: true
+                }
+              }
+            })
+            console.log(`Made ${type} component resizable`)
+          }
+        } catch (error) {
+          console.warn(`Could not update ${type} component:`, error)
+        }
+      })
 
       // Add simple end drop zone functionality
       setupEndDropZone(grapesEditor)
@@ -596,7 +1014,7 @@ export default function BuilderPage() {
       const pm = grapesEditor.Panels
       const cm = grapesEditor.Commands
       
-      // Add grid toggle command FIRST
+      // Add enhanced grid toggle command FIRST
       let gridEnabled = true
       cm.add('toggle-grid', {
         run: (editor: any) => {
@@ -604,11 +1022,29 @@ export default function BuilderPage() {
           if (magneticGrid) {
             magneticGrid.toggleGridVisibility(gridEnabled)
           }
-          // Update button state
+          // Update button state with enhanced visual feedback
           const btn = pm.getButton('options', 'grid-toggle')
           if (btn) {
             btn.set('active', gridEnabled)
+            // Update button appearance based on state
+            const btnEl = btn.get('el')
+            if (btnEl) {
+              if (gridEnabled) {
+                btnEl.classList.add('grid-active')
+                btnEl.style.background = '#3b82f6'
+                btnEl.style.color = 'white'
+                btnEl.style.boxShadow = '0 0 8px rgba(59, 130, 246, 0.4)'
+                btnEl.innerHTML = '⊞ Grid ON'
+              } else {
+                btnEl.classList.remove('grid-active')
+                btnEl.style.background = ''
+                btnEl.style.color = ''
+                btnEl.style.boxShadow = ''
+                btnEl.innerHTML = '⊞ Grid OFF'
+              }
+            }
           }
+          console.log('Grid toggled:', gridEnabled ? 'ON' : 'OFF')
         }
       })
       
@@ -632,7 +1068,6 @@ export default function BuilderPage() {
         try {
           const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
           const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
-          const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
           
           if (styleEl) {
             styleEl.innerHTML = '' // Clear existing content
@@ -650,13 +1085,8 @@ export default function BuilderPage() {
             console.warn('LayerManager container not found')
           }
           
-          if (traitEl) {
-            traitEl.innerHTML = '' // Clear existing content
-            tm.render(traitEl)
-            console.log('TraitManager rendered successfully')
-          } else {
-            console.warn('TraitManager container not found')
-          }
+          // NOTE: TraitManager replaced with ReactSettingsPanel - no rendering needed
+          console.log('ReactSettingsPanel will handle traits (no TraitManager needed)')
         } catch (error) {
           console.error('Error rendering managers:', error)
         }
@@ -669,15 +1099,66 @@ export default function BuilderPage() {
         
         panel.get('buttons').add({
           id: 'grid-toggle',
-          className: 'btn-grid-toggle',
-          label: '⊞ Grid',
+          className: 'btn-grid-toggle grid-active',
+          label: '⊞ Grid ON',
           command: 'toggle-grid',
           context: 'toggle-grid',
-          attributes: { title: 'Toggle Grid Visibility' },
+          attributes: { 
+            title: 'Toggle Grid Visibility (ON/OFF)',
+            style: 'background: #3b82f6; color: white; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); border-radius: 4px; transition: all 0.2s ease;'
+          },
           active: true
         })
 
         console.log('Grid toggle button added to panel')
+
+        // Add enhanced button styling
+        const addButtonStyling = () => {
+          const styleEl = document.createElement('style')
+          styleEl.innerHTML = `
+            .btn-grid-toggle {
+              position: relative;
+              transition: all 0.3s ease !important;
+              border-radius: 6px !important;
+              font-weight: 600 !important;
+              min-width: 80px !important;
+              text-align: center !important;
+            }
+            
+            .btn-grid-toggle:hover {
+              transform: translateY(-1px) !important;
+              box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+            }
+            
+            .btn-grid-toggle.grid-active {
+              background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+              color: white !important;
+              box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+            }
+            
+            .btn-grid-toggle:not(.grid-active) {
+              background: #f3f4f6 !important;
+              color: #6b7280 !important;
+              border: 2px solid #d1d5db !important;
+            }
+            
+            .btn-undo, .btn-redo {
+              transition: all 0.2s ease !important;
+              border-radius: 4px !important;
+              min-width: 36px !important;
+              text-align: center !important;
+            }
+            
+            .btn-undo:hover, .btn-redo:hover {
+              background: #f3f4f6 !important;
+              transform: translateY(-1px) !important;
+            }
+          `
+          document.head.appendChild(styleEl)
+          console.log('Enhanced button styling added')
+        }
+        
+        setTimeout(addButtonStyling, 100)
 
         // Add undo/redo buttons
         panel.get('buttons').add({
@@ -712,8 +1193,149 @@ export default function BuilderPage() {
       }
     })
 
-    // Add image asset trait type
+    // Add trait change event handlers to ensure visual updates
+    grapesEditor.on('component:update', (component: any) => {
+      debugLog('=== component:update EVENT ===')
+      debugLog('Updated component:', component)
+      
+      // Prevent infinite loops
+      const componentId = component.getId?.() || component.cid || 'unknown'
+      if (componentUpdateLock.current.has(componentId)) {
+        debugWarn('Already processing component:update for', componentId, 'skipping to prevent infinite loop')
+        return
+      }
+      
+      componentUpdateLock.current.add(componentId)
+      
+      try {
+        const traits = component.get('traits')
+        debugLog('Component traits:', traits)
+        
+        if (traits && traits.length > 0) {
+          debugLog('Processing', traits.length, 'traits for component update...')
+          
+          // Apply trait values to component attributes and styles
+          traits.forEach((trait: any, index: number) => {
+            const name = trait.get('name')
+            const value = trait.get('value')
+            
+            debugLog(`Processing trait ${index + 1}/${traits.length}: ${name} = ${value}`)
+            
+            if (value) {
+              // Handle different trait types
+              switch(name) {
+                case 'content':
+                  debugLog('Updating component content:', value)
+                  if (component.set) {
+                    component.set('content', value)
+                  }
+                  break
+                case 'src':
+                  debugLog('Updating component src attribute:', value)
+                component.addAttributes({ src: value })
+                break
+              case 'alt':
+                component.addAttributes({ alt: value })
+                break
+              case 'href':
+                component.addAttributes({ href: value })
+                break
+              case 'target':
+                component.addAttributes({ target: value })
+                break
+              case 'placeholder':
+                component.addAttributes({ placeholder: value })
+                break
+              case 'colorScheme':
+                // Apply color scheme styling
+                if (value === 'modern') {
+                  component.addStyle({ 
+                    '--primary-color': '#3b82f6',
+                    '--secondary-color': '#1e40af',
+                    '--accent-color': '#06b6d4'
+                  })
+                } else if (value === 'warm') {
+                  component.addStyle({ 
+                    '--primary-color': '#f97316',
+                    '--secondary-color': '#ea580c',
+                    '--accent-color': '#dc2626'
+                  })
+                } else if (value === 'cool') {
+                  component.addStyle({ 
+                    '--primary-color': '#06b6d4',
+                    '--secondary-color': '#0891b2',
+                    '--accent-color': '#0d9488'
+                  })
+                }
+                break
+              case 'align':
+              case 'textAlignment':
+                component.addStyle({ 'text-align': value })
+                break
+              case 'width':
+                component.addStyle({ width: value + 'px' })
+                break
+              case 'height':
+                component.addStyle({ height: value + 'px' })
+                break
+              default:
+                // For other traits, try to apply as attributes
+                if (value !== undefined && value !== '') {
+                  component.addAttributes({ [name]: value })
+                }
+            }
+          }
+        })
+        
+        // Trigger component refresh
+        component.view?.render()
+      }
+      } finally {
+        // Remove from lock after a small delay
+        setTimeout(() => {
+          componentUpdateLock.current.delete(componentId)
+        }, 50)
+      }
+    })
+    
+    // Also listen for trait changes specifically
+    grapesEditor.on('component:update:traits', (component: any) => {
+      debugLog('=== component:update:traits EVENT ===')
+      debugLog('Component with updated traits:', component)
+      
+      const smartObjectId = component.get('attributes')?.['data-smart-object-id']
+      debugLog('Smart Object ID:', smartObjectId)
+      
+      // Prevent double processing
+      const componentId = component.getId?.() || component.cid || 'unknown'
+      const traitUpdateKey = `traits-${componentId}`
+      
+      if (componentUpdateLock.current.has(traitUpdateKey)) {
+        debugWarn('Already processing trait update for', componentId, 'skipping')
+        return
+      }
+      
+      componentUpdateLock.current.add(traitUpdateKey)
+      
+      try {
+        // Force re-render when traits change
+        if (component.view) {
+          debugLog('Re-rendering component view after trait update')
+          component.view.render()
+        } else {
+          debugWarn('No view available for component trait update')
+        }
+      } finally {
+        setTimeout(() => {
+          componentUpdateLock.current.delete(traitUpdateKey)
+        }, 50)
+      }
+    })
+    
+    // Get TraitManager instance
     const tm = grapesEditor.TraitManager
+    
+    // Add image asset trait type
     tm.addType('image-asset', {
       createInput({ trait }: { trait: any }) {
         const input = document.createElement('div')
@@ -769,6 +1391,32 @@ export default function BuilderPage() {
         input.appendChild(button)
         
         return input
+      }
+    })
+
+    // Add a simple textarea trait type used in TraitConfigurations
+    tm.addType('textarea', {
+      createInput({ trait }: { trait: any }) {
+        const input = document.createElement('textarea') as HTMLTextAreaElement
+        input.style.width = '100%'
+        input.style.minHeight = '70px'
+        input.style.padding = '8px'
+        input.style.border = '1px solid #d1d5db'
+        input.style.borderRadius = '6px'
+        input.style.fontSize = '14px'
+        input.placeholder = trait.get('placeholder') || ''
+        const val = trait.get('value') || ''
+        input.value = typeof val === 'string' ? val : String(val)
+        input.addEventListener('input', () => {
+          trait.set('value', input.value)
+        })
+        return input
+      },
+      onUpdate({ elInput, trait }: { elInput: HTMLTextAreaElement, trait: any }) {
+        const val = trait.get('value') || ''
+        if (elInput && elInput.value !== val) {
+          elInput.value = val
+        }
       }
     })
 
@@ -960,14 +1608,14 @@ export default function BuilderPage() {
   // Cleanup managers on component unmount
   useEffect(() => {
     return () => {
-      if (resizeManager) {
-        resizeManager.destroy()
-      }
       if (magneticGrid) {
         magneticGrid.destroy()
       }
+      if (hoverOutline) {
+        hoverOutline.destroy()
+      }
     }
-  }, [resizeManager, magneticGrid])
+  }, [magneticGrid, hoverOutline])
 
   if (loading) {
     return (
@@ -1034,24 +1682,20 @@ export default function BuilderPage() {
           </div>
           <div className="flex items-center space-x-3">
             <button 
-              onClick={() => setSmartObjectsMode(!smartObjectsMode)}
-              className={`header-btn ${smartObjectsMode ? 'header-btn-active' : ''}`}
-            >
-              🪄 Smart Objects
-            </button>
-            <button 
               onClick={saveProject}
               disabled={saving || !editor}
               className="header-btn header-btn-success"
             >
-              💾 {saving ? 'Saving...' : 'Save'}
+              <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.save, { size: 16, color: 'currentColor' }) }} />
+              {saving ? 'Saving...' : 'Save'}
             </button>
             <button 
               onClick={publishProject}
               disabled={!editor}
               className="header-btn header-btn-primary"
             >
-              🚀 Publish
+              <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.publish, { size: 16, color: 'currentColor' }) }} />
+              Publish
             </button>
           </div>
         </div>
@@ -1070,15 +1714,27 @@ export default function BuilderPage() {
                 placeholder="Search components..."
                 className="search-input"
               />
-              <span className="search-icon">🔎</span>
+              <span className="search-icon" dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.zoomIn, { size: 14, color: '#6b7280' }) }} />
             </div>
             <div className="sidebar-filters">
-              <button
-                onClick={() => setShowSmartOnly((v) => !v)}
-                className={`filter-btn ${showSmartOnly ? 'filter-btn-active' : ''}`}
-              >
-                🪄 Smart Only
-              </button>
+              <div className="view-mode-toggle">
+                <button
+                  onClick={() => setViewMode('compact')}
+                  className={`view-mode-btn ${viewMode === 'compact' ? 'view-mode-active' : ''}`}
+                  title="Compact view with icons and titles"
+                >
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.LAYOUT.grid, { size: 14, color: 'currentColor' }) }} />
+                  Compact
+                </button>
+                <button
+                  onClick={() => setViewMode('icon')}
+                  className={`view-mode-btn ${viewMode === 'icon' ? 'view-mode-active' : ''}`}
+                  title="Icon only view with hover descriptions"
+                >
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.BASIC.image, { size: 14, color: 'currentColor' }) }} />
+                  Icon Only
+                </button>
+              </div>
             </div>
           </div>
           <div className="blocks-container"></div>
@@ -1086,31 +1742,110 @@ export default function BuilderPage() {
 
         {/* Center: Canvas Area */}
         <div className="builder-canvas-area">
-          {/* Canvas Controls */}
-          <div className="canvas-controls">
-            <div className="canvas-controls-left">
+          {/* Enhanced Canvas Toolbar */}
+          <div className="canvas-toolbar">
+            {/* Left Section: Device Controls */}
+            <div className="toolbar-section">
               <div className="device-tabs">
                 <button
                   onClick={() => { editor?.setDevice('Desktop'); setActiveDevice('Desktop') }}
                   className={`device-tab ${activeDevice === 'Desktop' ? 'device-tab-active' : ''}`}
+                  title="Desktop View"
                 >
-                  🖥️ Desktop
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.DEVICES.desktop, { size: 18, color: 'currentColor' }) }} />
                 </button>
                 <button
                   onClick={() => { editor?.setDevice('Tablet'); setActiveDevice('Tablet') }}
                   className={`device-tab ${activeDevice === 'Tablet' ? 'device-tab-active' : ''}`}
+                  title="Tablet View"
                 >
-                  📟 Tablet
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.DEVICES.tablet, { size: 18, color: 'currentColor' }) }} />
                 </button>
                 <button
                   onClick={() => { editor?.setDevice('Mobile'); setActiveDevice('Mobile') }}
                   className={`device-tab ${activeDevice === 'Mobile' ? 'device-tab-active' : ''}`}
+                  title="Mobile View"
                 >
-                  📱 Mobile
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.DEVICES.mobile, { size: 18, color: 'currentColor' }) }} />
                 </button>
               </div>
             </div>
-            <div className="canvas-controls-right">
+
+            {/* Center Section: Canvas Tools */}
+            <div className="toolbar-section">
+              <div className="canvas-tools">
+                <div className="tool-group">
+                  <button
+                    onClick={() => {
+                      if (magneticGrid) {
+                        const isVisible = magneticGrid.isGridVisible()
+                        magneticGrid.toggleGridVisibility(!isVisible)
+                        setGridViewEnabled(!isVisible)
+                      }
+                    }}
+                    className={`tool-btn ${gridViewEnabled ? 'tool-btn-active' : ''}`}
+                    title="Toggle Grid"
+                  >
+                    <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.grid, { size: 16, color: 'currentColor' }) }} />
+                  </button>
+                  <div className="grid-size-dropdown">
+                    <button
+                      onClick={() => setShowGridSizeMenu(!showGridSizeMenu)}
+                      className="grid-size-btn"
+                      title="Grid Size"
+                    >
+                      {gridSize}px
+                      <span className="dropdown-arrow">▼</span>
+                    </button>
+                    {showGridSizeMenu && (
+                      <div className="grid-size-menu">
+                        {[8, 12, 16, 20, 24, 32].map(size => (
+                          <button
+                            key={size}
+                            onClick={() => {
+                              setGridSize(size)
+                              if (magneticGrid) {
+                                magneticGrid.setGridSize(size)
+                              }
+                              setShowGridSizeMenu(false)
+                            }}
+                            className={`grid-size-option ${size === gridSize ? 'active' : ''}`}
+                          >
+                            {size}px
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowObjectHighlights(!showObjectHighlights)
+                    // Add CSS class to body to enable/disable highlights
+                    document.body.classList.toggle('object-highlights-enabled', !showObjectHighlights)
+                  }}
+                  className={`tool-btn ${showObjectHighlights ? 'tool-btn-active' : ''}`}
+                  title="Toggle Object Highlights"
+                >
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.LAYOUT.container, { size: 16, color: 'currentColor' }) }} />
+                </button>
+                <button
+                  onClick={() => {
+                    if (hoverOutline) {
+                      const isEnabled = hoverOutline.isHoverEnabled()
+                      hoverOutline.setEnabled(!isEnabled)
+                    }
+                  }}
+                  className={`tool-btn ${hoverOutline?.isHoverEnabled() ? 'tool-btn-active' : ''}`}
+                  title="Toggle Hover Outlines"
+                >
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.BASIC.button, { size: 16, color: 'currentColor' }) }} />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Section: Zoom Controls */}
+            <div className="toolbar-section">
               <div className="zoom-controls">
                 <button
                   onClick={() => {
@@ -1120,8 +1855,9 @@ export default function BuilderPage() {
                     setZoom(next)
                   }}
                   className="zoom-btn"
+                  title="Zoom Out"
                 >
-                  −
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.zoomOut, { size: 14, color: 'currentColor' }) }} />
                 </button>
                 <span className="zoom-display">{zoom}%</span>
                 <button
@@ -1132,17 +1868,18 @@ export default function BuilderPage() {
                     setZoom(next)
                   }}
                   className="zoom-btn"
+                  title="Zoom In"
                 >
-                  +
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.zoomIn, { size: 14, color: 'currentColor' }) }} />
                 </button>
                 <button
                   onClick={() => { if (!editor) return; editor.Canvas.setZoom(100); setZoom(100) }}
                   className="zoom-reset"
+                  title="Reset Zoom (100%)"
                 >
-                  Reset
+                  <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.BASIC.text, { size: 12, color: 'currentColor' }) }} />
                 </button>
               </div>
-              <div className="canvas-options panel__basic-actions"></div>
             </div>
           </div>
           
@@ -1159,154 +1896,184 @@ export default function BuilderPage() {
 
         {/* Right Sidebar: Properties */}
         <aside className="builder-properties">
-          {selectedSmartObject ? (
-            <div className="properties-panel">
-              <div className="properties-header">
-                <h3 className="properties-title">Smart Object Settings</h3>
-                <button
-                  onClick={() => setSelectedSmartObject(null)}
-                  className="properties-close"
-                >
-                  ✕
-                </button>
-              </div>
-              <SmartObjectCustomizer
-                template={selectedSmartObject.template}
-                selectedComponent={selectedSmartObject.component}
-                onCustomizationChange={handleSmartObjectCustomization}
-              />
-            </div>
-          ) : showInspector ? (
-            <div className="properties-panel photoshop-style">
-              {/* Top Section (60%): Object Properties */}
+          {(showInspector || selectedComponent) ? (
+            <div className="properties-panel modern-layout">
+              {/* Top Section (60%): Selected Element Properties */}
               <div className="properties-top-section">
                 <div className="properties-header">
-                  <h3 className="properties-title">Properties</h3>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      onClick={() => {
-                        // Force re-render all panels
-                        setTimeout(() => {
-                          if (editor) {
-                            const sm = editor.StyleManager
-                            const lm = editor.LayerManager
-                            const tm = editor.TraitManager
+                  <div className="header-content">
+                    <h3 className="properties-title">
+                      <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.TOOLBAR.settings, { size: 16, color: 'currentColor' }) }} />
+                      Element Properties
+                    </h3>
+                    <div className="element-info">
+                      <span className="element-type">
+                        {selectedComponent ? (
+                          (() => {
+                            const attrs = selectedComponent.get('attributes') || {}
+                            const smartObjectId = attrs['data-smart-object-id'] || attrs['data-smart-object']
                             
-                            const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
-                            const layerEl = document.querySelector('#inspector-layers') as HTMLElement | null
-                            const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
+                            if (smartObjectId) {
+                              const smartObjectName = smartObjectId.replace('smart-', '').replace(/-/g, ' ')
+                              return `Smart ${smartObjectName.charAt(0).toUpperCase() + smartObjectName.slice(1)}`
+                            }
                             
-                            if (styleEl && sm) {
-                              try {
-                                styleEl.innerHTML = ''
-                                sm.render(styleEl)
-                                console.log('StyleManager force refreshed')
-                              } catch (e) {
-                                console.warn('StyleManager refresh failed:', e)
-                              }
+                            if (componentType) {
+                              return `${componentType.charAt(0).toUpperCase() + componentType.slice(1)} Element`
                             }
-                            if (layerEl && lm) {
-                              try {
-                                layerEl.innerHTML = ''
-                                lm.render(layerEl)
-                                console.log('LayerManager force refreshed')
-                              } catch (e) {
-                                console.warn('LayerManager refresh failed:', e)
+                            
+                            return selectedComponent.get('tagName')?.toUpperCase() || 'Element'
+                          })()
+                        ) : 'No element selected'}
+                      </span>
+                      {selectedComponent && (
+                        <div className="element-details">
+                          <span className="element-id">
+                            {(() => {
+                              const attrs = selectedComponent.get('attributes') || {}
+                              const smartObjectId = attrs['data-smart-object-id'] || attrs['data-smart-object']
+                              const regularId = attrs.id
+                              const elementId = selectedComponent.getId?.()
+                              
+                              if (smartObjectId) {
+                                return `Smart Object: ${smartObjectId}`
+                              } else if (regularId) {
+                                return `ID: ${regularId}`
+                              } else if (elementId) {
+                                return `Element: ${elementId}`
+                              } else {
+                                return `Tag: ${selectedComponent.get('tagName') || 'div'}`
                               }
-                            }
-                            if (traitEl && tm) {
-                              try {
-                                traitEl.innerHTML = ''
-                                tm.render(traitEl)
-                                console.log('TraitManager force refreshed')
-                              } catch (e) {
-                                console.warn('TraitManager refresh failed:', e)
-                              }
-                            }
-                          }
-                        }, 50)
-                      }}
-                      style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        color: '#60a5fa',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        cursor: 'pointer'
-                      }}
-                      title="Refresh panels if they're not showing"
-                    >
-                      🔄
-                    </button>
-                    <button
-                      onClick={() => setShowInspector(false)}
-                      className="properties-close"
-                    >
-                      ✕
-                    </button>
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
                 <div className="properties-tabs">
                   <button 
                     onClick={() => {
-                      setInspectorTab('styles')
-                      // Re-render StyleManager when switching to styles tab
-                      setTimeout(() => {
-                        if (editor) {
-                          const sm = editor.StyleManager
-                          const styleEl = document.querySelector('#inspector-styles') as HTMLElement | null
-                          if (styleEl && sm) {
-                            try {
-                              styleEl.innerHTML = ''
-                              sm.render(styleEl)
-                            } catch (e) {
-                              console.warn('StyleManager tab re-render failed:', e)
-                            }
-                          }
-                        }
-                      }, 50)
-                    }} 
-                    className={`properties-tab ${inspectorTab==='styles'?'properties-tab-active':''}`}
-                  >
-                    🎨 Styles
-                  </button>
-                  <button 
-                    onClick={() => {
                       setInspectorTab('traits')
-                      // Re-render TraitManager when switching to traits tab
+                      // Refresh TraitManager by selecting current component; avoid heavy re-render
                       setTimeout(() => {
                         if (editor) {
-                          const tm = editor.TraitManager
-                          const traitEl = document.querySelector('#inspector-traits') as HTMLElement | null
-                          if (traitEl && tm) {
-                            try {
-                              traitEl.innerHTML = ''
-                              tm.render(traitEl)
-                            } catch (e) {
-                              console.warn('TraitManager tab re-render failed:', e)
+                          try {
+                            const tm = editor.TraitManager
+                            const selected = editor.getSelected?.()
+                            debugLog('Traits tab clicked - TraitManager:', !!tm, 'Selected:', !!selected)
+                            
+                            if (tm && typeof tm.select === 'function' && selected) {
+                              tm.select(selected)
+                              debugLog('TraitManager refreshed on tab switch')
+                              
+                              // Check container after tab switch
+                              setTimeout(() => {
+                                const traitContainer = document.querySelector('#inspector-traits')
+                                if (traitContainer) {
+                                  debugLog('After tab switch - container children:', traitContainer.children.length)
+                                  if (traitContainer.children.length === 0) {
+                                    debugWarn('Container still empty after tab switch, forcing render...')
+                                    tm.render(traitContainer)
+                                    tm.select(selected)
+                                  }
+                                }
+                              }, 50)
                             }
+                          } catch (e) {
+                            debugError('TraitManager tab refresh failed:', e)
                           }
                         }
                       }, 50)
                     }} 
                     className={`properties-tab ${inspectorTab==='traits'?'properties-tab-active':''}`}
+                    title="Element Configuration"
                   >
-                    ⚙️ Settings
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="mr-1"
+                    >
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                    </svg>
+                    Configuration
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setInspectorTab('styles')
+                      // Refresh StyleManager by selecting current component; avoid heavy re-render
+                      setTimeout(() => {
+                        if (editor) {
+                          try {
+                            const sm = editor.StyleManager
+                            const selected = editor.getSelected?.()
+                            if (sm && typeof sm.select === 'function' && selected) {
+                              sm.select(selected)
+                            }
+                          } catch (e) {
+                            console.warn('StyleManager tab refresh failed:', e)
+                          }
+                        }
+                      }, 50)
+                    }} 
+                    className={`properties-tab ${inspectorTab==='styles'?'properties-tab-active':''}`}
+                    title="Element Styles"
+                  >
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="mr-1"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Styles
                   </button>
                 </div>
                 
                 <div className="properties-content">
-                  <div id="inspector-styles" style={{ display: inspectorTab==='styles' ? 'block' : 'none' }}></div>
-                  <div id="inspector-traits" style={{ display: inspectorTab==='traits' ? 'block' : 'none' }}></div>
+                  {/* GrapesJS Inspector Containers */}
+                  <div style={{ display: inspectorTab==='traits' ? 'block' : 'none', height: '100%' }}>
+                    <ReactSettingsPanel 
+                      editor={editor}
+                      selectedComponent={selectedComponent}
+                      onSettingsChange={(settings) => {
+                        debugLog('Settings changed from React panel:', settings)
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: inspectorTab==='styles' ? 'block' : 'none', height: '100%' }}>
+                    <ReactStylesPanel 
+                      editor={editor}
+                      selectedComponent={selectedComponent}
+                      onSettingsChange={(settings) => {
+                        debugLog('Styles changed from React panel:', settings)
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               
               {/* Bottom Section (40%): Layer Management */}
               <div className="properties-bottom-section">
                 <div className="layers-header">
-                  <h3 className="layers-title">🗂️ Layers</h3>
+                  <h3 className="layers-title">
+                    <span dangerouslySetInnerHTML={{ __html: renderIcon(ICON_CATEGORIES.LAYOUT.container, { size: 16, color: 'currentColor' }) }} />
+                    Layers
+                  </h3>
                 </div>
                 <div className="layers-content">
                   <div id="inspector-layers"></div>

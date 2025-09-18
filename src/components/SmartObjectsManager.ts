@@ -2,77 +2,207 @@ import { Component, Editor } from 'grapesjs'
 import { SmartObjectTemplate } from '../types/smartObjects'
 import { SMART_OBJECTS, SMART_OBJECTS_BY_CATEGORY } from '../data/smartObjects'
 
+// Debug mode flag - matches BuilderPage DEBUG_MODE
+const DEBUG_MODE = true
+
+// Debug logger utilities for SmartObjectsManager
+const debugLog = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.log('🔧 [SmartObjectsManager]', ...args)
+  }
+}
+
+const debugWarn = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.warn('⚠️ [SmartObjectsManager]', ...args)
+  }
+}
+
+const debugError = (...args: any[]) => {
+  if (DEBUG_MODE) {
+    console.error('❌ [SmartObjectsManager]', ...args)
+  }
+}
+
 export class SmartObjectsManager {
   private editor: Editor
   private templates: SmartObjectTemplate[]
+  private processingTraitChanges: Set<string> = new Set()
   
   constructor(editor: Editor) {
+    debugLog('=== SmartObjectsManager Constructor ===')
+    debugLog('Editor instance:', editor)
+    debugLog('Available templates:', SMART_OBJECTS.length)
+    
     this.editor = editor
     this.templates = SMART_OBJECTS
+    
+    debugLog('Starting Smart Objects registration...')
     this.registerSmartObjects()
+    
+    debugLog('Setting up Smart Objects panel...')
     this.setupSmartObjectsPanel()
+    
+    debugLog('Setting up trait change handlers...')
     this.setupTraitHandlers()
+    
+    debugLog('SmartObjectsManager initialization complete!')
   }
   
   /**
    * Setup trait change handlers for Smart Objects
    */
   private setupTraitHandlers() {
+    debugLog('Setting up trait change handlers...')
+    
     this.editor.on('component:update:traits', (component: Component) => {
+      debugLog('component:update:traits event triggered for component:', component)
       const smartObjectId = component.get('attributes')?.['data-smart-object-id']
+      debugLog('Smart Object ID from component:', smartObjectId)
+      
       if (smartObjectId) {
+        debugLog('Handling trait change for Smart Object:', smartObjectId)
         this.handleSmartObjectTraitChange(component, smartObjectId)
+      } else {
+        debugLog('No Smart Object ID found, skipping trait handling')
       }
     })
 
     // GrapesJS passes a Trait instance to 'trait:change'. Extract the component safely.
     this.editor.on('trait:change', (trait: any) => {
+      debugLog('trait:change event triggered for trait:', trait)
       try {
         const comp: Component | undefined = trait?.target || trait?.getTarget?.() || this.editor.getSelected()
-        if (!comp) return
+        debugLog('Component extracted from trait:', comp)
+        
+        if (!comp) {
+          debugLog('No component found for trait change, skipping...')
+          return
+        }
+        
         const smartObjectId = comp.get('attributes')?.['data-smart-object-id']
+        debugLog('Smart Object ID from trait component:', smartObjectId)
+        
         if (smartObjectId) {
+          debugLog('Handling trait change for Smart Object via trait:change:', smartObjectId)
           this.handleSmartObjectTraitChange(comp, smartObjectId)
         }
       } catch (err) {
-        console.warn('Trait change handling error:', err)
+        debugError('Trait change handling error:', err)
       }
     })
+    
+    debugLog('Trait change handlers setup complete!')
   }
 
   /**
    * Handle trait changes for Smart Objects
    */
   private handleSmartObjectTraitChange(component: Component, smartObjectId: string) {
-    const template = this.getTemplate(smartObjectId)
-    if (!template) return
-
-    const traits = component.get('traits')
-    if (!traits || !Array.isArray(traits)) return
+    debugLog('=== handleSmartObjectTraitChange START ===')
+    debugLog('Component:', component)
+    debugLog('Smart Object ID:', smartObjectId)
     
-    const attributes = component.get('attributes') || {}
+    // Prevent infinite loops by checking if we're already processing this component
+    const componentId = component.getId?.() || component.cid || 'unknown'
+    const processingKey = `${componentId}-${smartObjectId}`
     
-    // Update component attributes based on trait values
-    traits.forEach((trait: any) => {
-      const traitName = trait.get('name')
-      const traitValue = trait.get('value')
-      
-      // Map trait names to data attributes
-      const dataAttr = this.getDataAttributeForTrait(traitName)
-      if (dataAttr) {
-        attributes[dataAttr] = traitValue
+    if (this.processingTraitChanges.has(processingKey)) {
+      debugWarn('Already processing trait changes for component, skipping to prevent infinite loop:', processingKey)
+      return
+    }
+    
+    // Mark as processing
+    this.processingTraitChanges.add(processingKey)
+    
+    try {
+      const template = this.getTemplate(smartObjectId)
+      if (!template) {
+        debugWarn('No template found for Smart Object ID:', smartObjectId)
+        return
       }
-    })
+      
+      debugLog('Template found:', template.name)
 
-    // Update component attributes
-    component.set('attributes', attributes)
+      const traitsCollection = component.get('traits')
+      debugLog('Component traits collection:', traitsCollection)
+      
+      // Handle GrapesJS Traits collection - extract models array
+      let traits: any[] = []
+      if (traitsCollection) {
+        if (Array.isArray(traitsCollection)) {
+          traits = traitsCollection
+        } else if (traitsCollection.models && Array.isArray(traitsCollection.models)) {
+          traits = traitsCollection.models
+          debugLog('Extracted traits from collection.models:', traits.length, 'traits')
+        } else if (typeof traitsCollection.toArray === 'function') {
+          traits = traitsCollection.toArray()
+          debugLog('Extracted traits from collection.toArray():', traits.length, 'traits')
+        } else {
+          debugWarn('Unknown traits format, attempting to iterate...')
+          try {
+            traits = []
+            for (let i = 0; i < traitsCollection.length; i++) {
+              const trait = traitsCollection.at ? traitsCollection.at(i) : (traitsCollection as any)[i]
+              if (trait) traits.push(trait)
+            }
+            debugLog('Extracted traits by iteration:', traits.length, 'traits')
+          } catch (err) {
+            debugError('Failed to extract traits:', err)
+            return
+          }
+        }
+      }
+      
+      if (!traits || traits.length === 0) {
+        debugWarn('No valid traits found:', traitsCollection)
+        return
+      }
+      
+      debugLog('Processing', traits.length, 'traits...')
+      
+      const attributes = component.get('attributes') || {}
+      debugLog('Current component attributes:', attributes)
+      
+      // Update component attributes based on trait values
+      traits.forEach((trait: any, index: number) => {
+        const traitName = trait.get('name')
+        const traitValue = trait.get('value')
+        
+        debugLog(`Processing trait ${index + 1}/${traits.length}:`, { name: traitName, value: traitValue })
+        
+        // Map trait names to data attributes
+        const dataAttr = this.getDataAttributeForTrait(traitName)
+        if (dataAttr) {
+          debugLog(`Mapping trait '${traitName}' to attribute '${dataAttr}' with value:`, traitValue)
+          attributes[dataAttr] = traitValue
+        } else {
+          debugWarn(`No data attribute mapping found for trait '${traitName}'`)
+        }
+      })
 
-    // Apply visual changes based on specific traits
-    this.applyTraitVisualChanges(component, template, traits)
+      debugLog('Updated attributes:', attributes)
+      
+      // Update component attributes
+      component.set('attributes', attributes)
+      debugLog('Component attributes updated successfully')
+
+      // Apply visual changes based on specific traits
+      debugLog('Applying visual changes...')
+      this.applyTraitVisualChanges(component, template, traits)
+      
+      // Don't trigger additional component:update events to prevent loops
+      debugLog('Skipping component:update trigger to prevent infinite loops')
+      
+    } finally {
+      // Always remove from processing set
+      setTimeout(() => {
+        this.processingTraitChanges.delete(processingKey)
+        debugLog('Removed processing lock for:', processingKey)
+      }, 100) // Small delay to allow for any immediate re-triggers
+    }
     
-    // Trigger component update
-    component.trigger('change:attributes')
-    this.editor.trigger('component:update', component)
+    debugLog('=== handleSmartObjectTraitChange END ===')
   }
 
   /**
@@ -102,49 +232,79 @@ export class SmartObjectsManager {
    * Apply visual changes based on trait values
    */
   private applyTraitVisualChanges(component: Component, template: SmartObjectTemplate, traits: any[]) {
+    debugLog('=== applyTraitVisualChanges START ===')
+    debugLog('Component:', component)
+    debugLog('Template:', template.name)
+    debugLog('Traits to process:', traits.length)
+    
     const view = component.view
-    if (!view || !view.el) return
+    if (!view || !view.el) {
+      debugWarn('Component view or element not available:', { view: !!view, el: view?.el })
+      return
+    }
 
     const element = view.el
+    debugLog('Target element:', element)
+    debugLog('Element classes:', element.className)
+    debugLog('Element data attributes:', Array.from(element.attributes).filter(attr => attr.name.startsWith('data-')))
 
-    traits.forEach((trait: any) => {
+    traits.forEach((trait: any, index: number) => {
       const traitName = trait.get('name')
       const traitValue = trait.get('value')
 
+      debugLog(`Applying visual change ${index + 1}/${traits.length}: ${traitName} = ${traitValue}`)
+
       switch (traitName) {
         case 'colorScheme':
+          debugLog('Applying color scheme:', traitValue)
           this.applyColorScheme(element, traitValue)
           // Also apply to component styles for persistence
           this.applyColorSchemeToComponent(component, traitValue)
           break
         case 'layout':
+          debugLog('Applying layout:', traitValue)
           this.applyLayout(element, traitValue)
           this.applyLayoutToComponent(component, traitValue)
           break
         case 'productTitle':
+          debugLog('Updating product title:', traitValue)
           this.updateProductTitle(element, traitValue)
           break
         case 'productPrice':
+          debugLog('Updating product price:', traitValue)
           this.updateProductPrice(element, traitValue)
           break
         case 'productDescription':
+          debugLog('Updating product description:', traitValue)
           this.updateProductDescription(element, traitValue)
           break
         case 'sectionTitle':
+          debugLog('Updating section title:', traitValue)
           this.updateSectionTitle(element, traitValue)
           break
+        default:
+          debugLog('No specific visual handler for trait:', traitName)
       }
     })
 
     // Force component update to ensure changes are saved
+    debugLog('Forcing component view render...')
     component.view?.render()
-    this.editor.trigger('component:update', component)
+    
+    // Don't trigger additional editor updates here to prevent loops
+    debugLog('Skipping editor trigger to prevent infinite loops')
+    
+    debugLog('=== applyTraitVisualChanges END ===')
   }
 
   /**
    * Apply color scheme to Smart Object
    */
   private applyColorScheme(element: HTMLElement, colorSchemeId: string) {
+    debugLog('=== applyColorScheme START ===')
+    debugLog('Element:', element)
+    debugLog('Color scheme ID:', colorSchemeId)
+    
     const colorSchemes = [
       { id: 'modern', primary: '#3b82f6', secondary: '#1d4ed8', accent: '#f59e0b', background: '#ffffff', text: '#1f2937' },
       { id: 'warm', primary: '#f59e0b', secondary: '#d97706', accent: '#ef4444', background: '#fef7ed', text: '#1c1917' },
@@ -155,13 +315,21 @@ export class SmartObjectsManager {
     ]
 
     const scheme = colorSchemes.find(s => s.id === colorSchemeId)
+    debugLog('Found color scheme:', scheme)
+    
     if (scheme) {
+      debugLog('Applying CSS variables to element...')
       element.style.setProperty('--primary-color', scheme.primary)
       element.style.setProperty('--secondary-color', scheme.secondary)
       element.style.setProperty('--accent-color', scheme.accent)
       element.style.setProperty('--background-color', scheme.background)
       element.style.setProperty('--text-color', scheme.text)
+      debugLog('CSS variables applied successfully')
+    } else {
+      debugWarn('Color scheme not found:', colorSchemeId)
     }
+    
+    debugLog('=== applyColorScheme END ===')
   }
 
   /**
@@ -195,10 +363,27 @@ export class SmartObjectsManager {
    * Apply layout changes to Smart Object
    */
   private applyLayout(element: HTMLElement, layout: string) {
+    debugLog('=== applyLayout START ===')
+    debugLog('Element:', element)
+    debugLog('Layout to apply:', layout)
+    debugLog('Current element classes:', element.className)
+    
     // Remove existing layout classes
-    element.classList.remove('layout-horizontal', 'layout-vertical', 'layout-centered')
+    const layoutClasses = ['layout-horizontal', 'layout-vertical', 'layout-centered']
+    layoutClasses.forEach(cls => {
+      if (element.classList.contains(cls)) {
+        debugLog('Removing existing layout class:', cls)
+        element.classList.remove(cls)
+      }
+    })
+    
     // Add new layout class
-    element.classList.add(`layout-${layout}`)
+    const newLayoutClass = `layout-${layout}`
+    debugLog('Adding new layout class:', newLayoutClass)
+    element.classList.add(newLayoutClass)
+    
+    debugLog('Updated element classes:', element.className)
+    debugLog('=== applyLayout END ===')
   }
 
   /**
@@ -226,91 +411,182 @@ export class SmartObjectsManager {
    * Update product title
    */
   private updateProductTitle(element: HTMLElement, title: string) {
+    debugLog('=== updateProductTitle START ===')
+    debugLog('Element:', element)
+    debugLog('New title:', title)
+    
     const titleElement = element.querySelector('.product-title')
+    debugLog('Title element found:', !!titleElement)
+    
     if (titleElement) {
+      debugLog('Current title:', titleElement.textContent)
       titleElement.textContent = title
+      debugLog('Title updated successfully')
+    } else {
+      debugWarn('Product title element not found in:', element)
     }
+    
+    debugLog('=== updateProductTitle END ===')
   }
 
   /**
    * Update product price
    */
   private updateProductPrice(element: HTMLElement, price: string | number) {
+    debugLog('=== updateProductPrice START ===')
+    debugLog('Element:', element)
+    debugLog('New price:', price)
+    
     const priceElement = element.querySelector('.product-price')
+    debugLog('Price element found:', !!priceElement)
+    
     if (priceElement) {
       const formattedPrice = typeof price === 'number' ? `$${price.toFixed(2)}` : price
+      debugLog('Current price:', priceElement.textContent)
+      debugLog('Formatted price:', formattedPrice)
       priceElement.textContent = formattedPrice
+      debugLog('Price updated successfully')
+    } else {
+      debugWarn('Product price element not found in:', element)
     }
+    
+    debugLog('=== updateProductPrice END ===')
   }
 
   /**
    * Update product description
    */
   private updateProductDescription(element: HTMLElement, description: string) {
+    debugLog('=== updateProductDescription START ===')
+    debugLog('Element:', element)
+    debugLog('New description:', description)
+    
     const descElement = element.querySelector('.product-description')
+    debugLog('Description element found:', !!descElement)
+    
     if (descElement) {
+      debugLog('Current description:', descElement.textContent)
       descElement.textContent = description
+      debugLog('Description updated successfully')
+    } else {
+      debugWarn('Product description element not found in:', element)
     }
+    
+    debugLog('=== updateProductDescription END ===')
   }
 
   /**
    * Update section title for components like testimonials, FAQ
    */
   private updateSectionTitle(element: HTMLElement, title: string) {
+    debugLog('=== updateSectionTitle START ===')
+    debugLog('Element:', element)
+    debugLog('New title:', title)
+    
     const titleSelectors = ['.testimonial-section-title', '.faq-section-title']
+    debugLog('Checking selectors:', titleSelectors)
+    
     for (const selector of titleSelectors) {
       const titleElement = element.querySelector(selector)
+      debugLog(`Element found for '${selector}':`, !!titleElement)
+      
       if (titleElement) {
+        debugLog('Current title:', titleElement.textContent)
         titleElement.textContent = title
+        debugLog('Section title updated successfully with selector:', selector)
         break
       }
     }
+    
+    debugLog('=== updateSectionTitle END ===')
   }
   
   /**
    * Register all Smart Object components with GrapeJS
    */
   private registerSmartObjects() {
-    this.templates.forEach(template => {
+    debugLog('=== registerSmartObjects START ===')
+    debugLog('Total templates to register:', this.templates.length)
+    
+    this.templates.forEach((template, index) => {
+      debugLog(`Registering template ${index + 1}/${this.templates.length}: ${template.name} (${template.id})`)
       this.registerSmartObject(template)
     })
+    
+    debugLog('=== registerSmartObjects END ===')
   }
   
   /**
    * Register a single Smart Object template as a GrapeJS component
    */
   private registerSmartObject(template: SmartObjectTemplate) {
+    debugLog('=== registerSmartObject START ===')
+    debugLog('Template:', template.name, '(', template.id, ')')
+    debugLog('Component type:', template.component.type)
+    debugLog('Component defaults:', template.component.defaults)
+    
     const { component } = template
     
-    // Register the component type with GrapeJS
-    this.editor.DomComponents.addType(component.type, {
-      model: {
-        defaults: {
-          ...component.defaults,
-          content: this.generateSmartObjectHTML(template),
-          attributes: {
-            ...component.defaults.attributes,
-            'data-smart-object-id': template.id
-          }
+    try {
+      // Register the component type with GrapeJS
+      this.editor.DomComponents.addType(component.type, {
+        model: {
+          defaults: {
+            ...component.defaults,
+            content: this.generateSmartObjectHTML(template),
+            attributes: {
+              ...component.defaults.attributes,
+              'data-smart-object-id': template.id
+            },
+            // Enable resizing for all Smart Objects
+            resizable: true,
+            // Enable other useful properties
+            draggable: true,
+            droppable: true,
+            selectable: true,
+            hoverable: true,
+            // Set minimum dimensions
+            style: {
+              ...component.defaults.style,
+              minWidth: '100px',
+              minHeight: '50px'
+            }
+          },
+          ...component.model
         },
-        ...component.model
-      },
-      view: {
-        ...component.view,
-        onRender() {
-          console.log(`Initialized Smart Object: ${template.name}`)
+        view: {
+          ...component.view,
+          onRender() {
+            // Only log once per component instance instead of every render
+            if (!this.loggedInit) {
+              debugLog(`Initialized Smart Object: ${template.name}`)
+              this.loggedInit = true
+            }
+          }
         }
-      }
-    })
+      })
+      
+      debugLog('Successfully registered Smart Object:', template.name)
+    } catch (error) {
+      debugError('Failed to register Smart Object:', template.name, error)
+    }
+    
+    debugLog('=== registerSmartObject END ===')
   }
   
   /**
    * Generate HTML content for Smart Object based on template
    */
   private generateSmartObjectHTML(template: SmartObjectTemplate): string {
+    debugLog('=== generateSmartObjectHTML START ===')
+    debugLog('Generating HTML for template:', template.name, '(', template.id, ')')
+    
+    let html = ''
+    
     switch (template.id) {
       case 'smart-product-showcase':
-        return `
+        debugLog('Generating Smart Product Showcase HTML...')
+        html = `
           <div class="smart-product-showcase-container">
             <div class="product-gallery-section">
               <div class="main-image-wrapper">
@@ -352,6 +628,8 @@ export class SmartObjectsManager {
             </div>
           </div>
         `
+        debugLog('Smart Product Showcase HTML generated successfully')
+        break
       
       case 'smart-testimonial-carousel':
         return `
@@ -546,7 +824,8 @@ export class SmartObjectsManager {
         `
       
       case 'smart-cta-banner':
-        return `
+        debugLog('Generating Smart CTA Banner HTML...')
+        html = `
           <div class="smart-cta-banner-content">
             <div class="cta-text-section">
               <h2 class="cta-title">Level-up your storefront</h2>
@@ -557,10 +836,18 @@ export class SmartObjectsManager {
             </div>
           </div>
         `
+        debugLog('Smart CTA Banner HTML generated successfully')
+        break
       
       default:
-        return '<div class="smart-object-placeholder">Smart Object Content</div>'
+        debugWarn('Unknown template ID, using placeholder:', template.id)
+        html = '<div class="smart-object-placeholder">Smart Object Content</div>'
     }
+    
+    debugLog('Generated HTML length:', html.length, 'characters')
+    debugLog('=== generateSmartObjectHTML END ===')
+    
+    return html
   }
   
   /**
@@ -589,7 +876,7 @@ export class SmartObjectsManager {
             'data-smart-object-version': '1.0'
           }
         },
-        media: this.getDefaultThumbnail(template.category),
+        media: template.thumbnail, // Use abstract SVG icon from template
         attributes: {
           class: 'smart-object-block',
           'data-category': template.category,
@@ -605,10 +892,10 @@ export class SmartObjectsManager {
    */
   private getCategoryLabel(category: string): string {
     const categoryLabels = {
-      ecommerce: '🛒 Smart E-commerce',
-      content: '📝 Smart Content',
-      layout: '📐 Smart Layout',
-      interactive: '⚡ Smart Interactive'
+      ecommerce: 'Smart E-commerce',
+      content: 'Smart Content', 
+      layout: 'Smart Layout',
+      interactive: 'Smart Interactive'
     }
     return categoryLabels[category as keyof typeof categoryLabels] || 'Smart Other'
   }
@@ -630,7 +917,21 @@ export class SmartObjectsManager {
    * Get Smart Object template by ID
    */
   getTemplate(id: string): SmartObjectTemplate | undefined {
-    return this.templates.find(template => template.id === id)
+    debugLog('=== getTemplate START ===')
+    debugLog('Looking for template with ID:', id)
+    debugLog('Available template IDs:', this.templates.map(t => t.id))
+    
+    const template = this.templates.find(template => template.id === id)
+    debugLog('Template found:', !!template)
+    
+    if (template) {
+      debugLog('Template details:', { name: template.name, category: template.category })
+    } else {
+      debugWarn('Template not found for ID:', id)
+    }
+    
+    debugLog('=== getTemplate END ===')
+    return template
   }
   
   /**
